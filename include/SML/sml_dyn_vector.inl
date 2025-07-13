@@ -16,7 +16,7 @@ void SML_DVEC_IMPLNAME(init)(SML_DVEC_TNAME *me)
 /**
  * Initialize the vector with a given capacity
 */
-void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, unsigned int capacity)
+void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capacity)
 {
     me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * capacity);
     assert(me->mem != NULL);
@@ -27,7 +27,7 @@ void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, unsigned int capaci
 /**
  * Initialize the vector with a given size
 */
-void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, unsigned int size)
+void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size)
 {
     me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * size);
     assert(me->mem != NULL);
@@ -81,7 +81,7 @@ void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me)
 */
 void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me)
 {
-    unsigned long newCap = SML_DVEC_GROWTH_FACTOR_NUM * me->capelems / SML_DVEC_GROWTH_FACTOR_DEN + 1; /* plus one for initial alloc */
+    size_t newCap = SML_DVEC_GROWTH_FACTOR_NUM * me->capelems / SML_DVEC_GROWTH_FACTOR_DEN + 1; /* plus one for initial alloc */
     me->mem = (SML_DVEC_T *)realloc(me->mem, newCap * sizeof(*me->mem));
     assert(me->mem);
     me->capelems = newCap;
@@ -91,7 +91,7 @@ void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me)
  * Unconditionally resize the vector to cnt elements
  * NOTE: can also shrink the vector
 */
-void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, unsigned long cnt)
+void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt)
 {
     me->mem = (SML_DVEC_T *)realloc(me->mem, cnt * sizeof(*me->mem));
     assert(me->mem);
@@ -103,7 +103,7 @@ void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, unsigned long cnt)
  * Reserve enough size for cnt elements
  * Does nothing if cnt <= capacity
 */
-void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, unsigned long cnt)
+void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt)
 {
     if (cnt <= me->capelems) 
         return;
@@ -129,13 +129,13 @@ void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val)
  * Push back a contiguous block of cnt elements
  * and if necessary, allocate new memory
 */
-void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, unsigned long cnt)
+void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, size_t cnt)
 {
-    const unsigned int reqCap = me->elems + cnt;
-    const unsigned int tempElems = me->elems;
+    const size_t reqCap = me->elems + cnt;
+    const size_t tempElems = me->elems;
 
     if (me->capelems < reqCap) {
-        unsigned int newCap = me->capelems;
+        size_t newCap = me->capelems;
         /* search for the growth iteration that fits */
         while (newCap < reqCap) { newCap = SML_DVEC_GROWTH_FACTOR_NUM * newCap / SML_DVEC_GROWTH_FACTOR_DEN + 1; }
         /* resize the vector, also updates number of elements */
@@ -153,7 +153,7 @@ void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *da
  * Set a contiguous block of cnt elements
  * NOTE: does not check for sufficient available memory!
 */
-void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, unsigned long idx, const SML_DVEC_T *data, unsigned long cnt)
+void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, size_t idx, const SML_DVEC_T *data, size_t cnt)
 {
     memcpy(me->mem + idx, data, cnt * sizeof(*me->mem));
 }
@@ -164,7 +164,7 @@ void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, unsigned long idx, const S
  */
 void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val)
 {
-    for (unsigned int i = 0; i < me->elems; ++i) {
+    for (size_t i = 0; i < me->elems; ++i) {
         me->mem[i] = val;
     }
 }

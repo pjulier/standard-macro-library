@@ -106,6 +106,7 @@ int main(void)
     SML_EHashMap_uint_get(&hashMap, "two", &two);
     SML_EHashMap_uint_get(&hashMap, "three", &three);
     printf("one: %u, two: %u, three %u\n", one, two, three);
+    SML_EHashMap_uint_destroy(&hashMap);
 
     /*
      * SML_CircBuf

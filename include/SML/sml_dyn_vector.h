@@ -42,23 +42,23 @@
  */
 typedef struct SML_DVEC_TNAME {
     SML_DVEC_T *mem;
-    unsigned long elems;
-    unsigned long capelems;
+    size_t elems;
+    size_t capelems;
 } SML_DVEC_TNAME;
 
 void SML_DVEC_IMPLNAME(init)(SML_DVEC_TNAME *me);
-void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, unsigned int capacity);
-void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, unsigned int size);
+void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capacity);
+void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size);
 void SML_DVEC_IMPLNAME(destroy)(SML_DVEC_TNAME *me);
 SML_DVEC_TNAME *SML_DVEC_IMPLNAME(create)(void);
 void SML_DVEC_IMPLNAME(free)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me);
-void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, unsigned long cnt);
-void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, unsigned long cnt);
+void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt);
+void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt);
 void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val);
-void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, unsigned long cnt);
-void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, unsigned long idx, const SML_DVEC_T *data, unsigned long cnt);
+void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, size_t cnt);
+void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, size_t idx, const SML_DVEC_T *data, size_t cnt);
 void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val);
 void SML_DVEC_IMPLNAME(fillBytes)(SML_DVEC_TNAME *me, unsigned char byteVal);
 
@@ -110,7 +110,7 @@ static inline SML_DVEC_T* SML_DVEC_IMPLNAME(back_p)(const SML_DVEC_TNAME *me)
  * Set val at index idx
  * NOTE: Does not check for out of range!
 */
-static inline void SML_DVEC_IMPLNAME(set)(SML_DVEC_TNAME *me, unsigned long idx, SML_DVEC_T val)
+static inline void SML_DVEC_IMPLNAME(set)(SML_DVEC_TNAME *me, size_t idx, SML_DVEC_T val)
 {
     me->mem[idx] = val;
 }
@@ -118,7 +118,7 @@ static inline void SML_DVEC_IMPLNAME(set)(SML_DVEC_TNAME *me, unsigned long idx,
 /** 
  * Return the current capacity
  */
-static inline unsigned long SML_DVEC_IMPLNAME(capacity)(const SML_DVEC_TNAME *me)
+static inline size_t SML_DVEC_IMPLNAME(capacity)(const SML_DVEC_TNAME *me)
 {
     return me->capelems;
 }
@@ -134,7 +134,7 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(begin)(const SML_DVEC_TNAME *me)
 /**
  * Return a pointer to the nth element
 */
-static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, unsigned int idx)
+static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, size_t idx)
 {
     return &me->mem[idx];
 }
@@ -142,7 +142,7 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, un
 /**
  * Return the current number of elements
 */
-static inline unsigned long SML_DVEC_IMPLNAME(size)(const SML_DVEC_TNAME *me)
+static inline size_t SML_DVEC_IMPLNAME(size)(const SML_DVEC_TNAME *me)
 {
     return me->elems;
 }
@@ -150,7 +150,7 @@ static inline unsigned long SML_DVEC_IMPLNAME(size)(const SML_DVEC_TNAME *me)
 /**
  * Return the element at index idx
 */
-static inline SML_DVEC_T SML_DVEC_IMPLNAME(get)(const SML_DVEC_TNAME *me, unsigned long idx)
+static inline SML_DVEC_T SML_DVEC_IMPLNAME(get)(const SML_DVEC_TNAME *me, size_t idx)
 {
     return me->mem[idx];
 }
