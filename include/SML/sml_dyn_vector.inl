@@ -158,4 +158,24 @@ void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, unsigned long idx, const S
     memcpy(me->mem + idx, data, cnt * sizeof(*me->mem));
 }
 
+/**
+ * @brief Fill the vector up to its current size with elements val
+ * 
+ */
+void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val)
+{
+    for (unsigned int i = 0; i < me->elems; ++i) {
+        me->mem[i] = val;
+    }
+}
+
+/**
+ * @brief Fill the vector up to its current size with raw bytes byteVal
+ * 
+ */
+void SML_DVEC_IMPLNAME(fillBytes)(SML_DVEC_TNAME *me, unsigned char byteVal)
+{
+    memset(&me->mem, byteVal, sizeof(*me->mem) * me->elems);
+}
+
 #undef SML_DVEC_IDENT

@@ -1,8 +1,16 @@
 #include <stdio.h>
+#include <limits.h>
 
 #include "SML/sml.h"
 #include "templates.h"
 
+static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
+{
+    int *arr = sort_arr;
+    const int idxA = *(int *)a;
+    const int idxB = *(int *)b;
+    return (arr[idxA] > arr[idxB]) - (arr[idxA] < arr[idxB]);
+}
 
 int main(void)
 {
@@ -38,5 +46,78 @@ int main(void)
     SML_fill_void(fill_arr, replace_arr, SML_ARRCOUNT(fill_arr) / SML_ARRCOUNT(replace_arr),  sizeof(replace_arr));
     for (unsigned int i = 0; i < SML_ARRCOUNT(fill_arr); ++i) {
         printf("fill_arr[%u]: %i\n", i, fill_arr[i]);
+    }
+
+    /*
+     * SML_quicksort_r
+     */
+    int sort_arr[] = {5, 2, 3, 4, 1, 7, 8, 6};
+    int idc_arr[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    SML_quicksort_r(idc_arr, SML_ARRCOUNT(idc_arr), sizeof(idc_arr[0]), sort_compare_fn, sort_arr);
+    for (unsigned int i = 0; i < SML_ARRCOUNT(sort_arr); ++i) {
+        printf("idc_arr[%u]: %i, sort_arr[idc_arr[%u]]: %i\n", i, idc_arr[i], i, sort_arr[idc_arr[i]]);
+    }
+
+    /*
+     * SML_string
+     */
+    char numbers[] = " -1234.0 999";
+    const char *from = numbers;
+    const char *to;
+
+    int num1 = SML_strtoi(from, &to);
+    if (from == to) {
+        return 1;
+    }
+    from = to;
+    int num2 = SML_strtoi(from, &to);
+    if (from == to) {
+        return 1;
+    }
+    printf("num1: %i, num2: %i\n", num1, num2);
+
+    char str_buf[64];
+    char *p = str_buf;
+    p = SML_strpcpy(p, "This string ");
+    p = SML_strpcpy(p, "has ");
+    p = SML_strpcpy(p, "3 parts");
+    printf("str_buf: %s\n", str_buf);
+    
+    char *str_dup = SML_strdup(str_buf);
+    printf("str_cpy: %s\n", str_dup);
+    free(str_dup);
+
+    char strbin[33];
+    SML_uint32tobin(UINT32_MAX - 1, strbin, 32);
+    printf("strbin: %s\n", strbin);
+
+    /*
+     * SML_EHashMap
+     */
+    SML_EHashMap_uint hashMap;
+    SML_EHashMap_uint_init(&hashMap, NULL, NULL);
+
+    SML_EHashMap_uint_insert(&hashMap, "one", 1);
+    SML_EHashMap_uint_insert(&hashMap, "two", 2);
+    SML_EHashMap_uint_insert(&hashMap, "three", 3);
+
+    unsigned int one, two, three;
+    SML_EHashMap_uint_get(&hashMap, "one", &one);
+    SML_EHashMap_uint_get(&hashMap, "two", &two);
+    SML_EHashMap_uint_get(&hashMap, "three", &three);
+    printf("one: %u, two: %u, three %u\n", one, two, three);
+
+    /*
+     * SML_CircBuf
+     */
+    SML_CircBuf_uint circBuf;
+    SML_CircBuf_uint_init(&circBuf);
+    SML_CircBuf_uint_push(&circBuf, 1);
+    SML_CircBuf_uint_push(&circBuf, 2);
+    SML_CircBuf_uint_push(&circBuf, 3);
+
+    while (!SML_CircBuf_uint_empty(&circBuf)) {
+        printf("From circBuf: %u\n", SML_CircBuf_uint_front(&circBuf));
+        SML_CircBuf_uint_pop(&circBuf);
     }
 }

@@ -59,6 +59,8 @@ void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, unsigned long cnt);
 void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val);
 void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, unsigned long cnt);
 void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, unsigned long idx, const SML_DVEC_T *data, unsigned long cnt);
+void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val);
+void SML_DVEC_IMPLNAME(fillBytes)(SML_DVEC_TNAME *me, unsigned char byteVal);
 
 /**
  * Returns true if the vector is empty
