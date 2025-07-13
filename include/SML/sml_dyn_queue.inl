@@ -8,7 +8,7 @@
 #define SML_DQUEUE_IDENT SML_DQUEUE_T
 #endif
 
-#define SML_DQUEUE_INITIAL_CAPACITY    4
+#define SML_DQUEUE_INITIAL_CAPACITY    2
 #define SML_DQUEUE_GROWTH_FACTOR_NUM   3
 #define SML_DQUEUE_GROWTH_FACTOR_DENUM 2
 
@@ -16,12 +16,20 @@ SML_DQUEUE_TNAME * SML_DQUEUE_IMPLNAME(create)(void)
 {
     SML_DQUEUE_TNAME *me = (SML_DQUEUE_TNAME *)malloc(sizeof(*me));
     assert(me != NULL);
-    SML_DQUEUE_IMPLNAME(init)(me, SML_DQUEUE_INITIAL_CAPACITY);
+    SML_DQUEUE_IMPLNAME(initWithCapacity)(me, SML_DQUEUE_INITIAL_CAPACITY);
     return me;
 }
 
-void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me, unsigned int initialCapacity)
+void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me)
 {
+    SML_DQUEUE_IMPLNAME(initWithCapacity)(me, SML_DQUEUE_INITIAL_CAPACITY);
+}
+
+void SML_DQUEUE_IMPLNAME(initWithCapacity)(SML_DQUEUE_TNAME *me, size_t initialCapacity)
+{
+    if (initialCapacity == 0)
+        initialCapacity = 1;
+
     me->capacity = initialCapacity;
     me->front = 0;
     me->back = 0;
@@ -29,7 +37,7 @@ void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me, unsigned int initialCapacit
     assert(me->mem);
 }
 
-unsigned int SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
+size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
     ssize_t size;
     size = (ssize_t)me->back - me->front;
     if (size < 0) {
@@ -38,17 +46,17 @@ unsigned int SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
     return size;
 }
 
-void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, unsigned int val) {
-    unsigned int next = (me->back + 1) % me->capacity;
+void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val) {
+    size_t next = (me->back + 1) % me->capacity;
     if (next == me->front) {
         /* buffer is full on next insert, realloc */
-        unsigned int newCapacity = SML_DQUEUE_GROWTH_FACTOR_NUM * me->capacity / SML_DQUEUE_GROWTH_FACTOR_DENUM + 1;
+        size_t newCapacity = SML_DQUEUE_GROWTH_FACTOR_NUM * me->capacity / SML_DQUEUE_GROWTH_FACTOR_DENUM + 1;
         me->mem = (SML_DQUEUE_T *)realloc(me->mem, newCapacity * sizeof(*me->mem));
         assert(me->mem);
 
         /* remove discontinuity */
         if (me->front > me->back) {
-            unsigned int shift = newCapacity - me->capacity;
+            size_t shift = newCapacity - me->capacity;
             memmove(&me->mem[me->front + shift], &me->mem[me->front], (me->capacity - me->front) * sizeof(*me->mem));
             me->front = me->front + shift;
         }
@@ -71,7 +79,7 @@ void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me) {
     me->front = (me->front + 1) % me->capacity;
 }
 
-unsigned int SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
+SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
         return 0;

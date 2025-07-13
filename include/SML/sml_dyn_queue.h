@@ -40,16 +40,17 @@ extern "C" {
  */
 typedef struct SML_DQUEUE_TNAME {
     SML_DQUEUE_T *mem;
-    unsigned int capacity;
-    unsigned int front;
-    unsigned int back;
+    size_t capacity;
+    size_t front;
+    size_t back;
 } SML_DQUEUE_TNAME;
 
 SML_DQUEUE_TNAME* SML_DQUEUE_IMPLNAME(create)(void);
 void SML_DQUEUE_IMPLNAME(free)(SML_DQUEUE_TNAME *me);
-void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me, unsigned int initialSize);
+void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me);
+void SML_DQUEUE_IMPLNAME(initWithCapacity)(SML_DQUEUE_TNAME *me, size_t initialCapacity);
 void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me);
-unsigned int SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me);
+size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me);
 void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val);
 SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me);
 void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me);

@@ -126,7 +126,7 @@ int main(void)
      * SML_DQueue
      */
     SML_DQueue_uint queue;
-    SML_DQueue_uint_init(&queue, 2);
+    SML_DQueue_uint_initWithCapacity(&queue, 1);
     SML_DQueue_uint_push(&queue, 1);
     SML_DQueue_uint_push(&queue, 2);
     SML_DQueue_uint_push(&queue, 3);
@@ -134,7 +134,7 @@ int main(void)
     SML_DQueue_uint_push(&queue, 5);
     SML_DQueue_uint_push(&queue, 6);
     SML_DQueue_uint_push(&queue, 7);
-    printf("Size of queue: %u\n", SML_DQueue_uint_size(&queue));
+    printf("Size of queue: %u\n", (unsigned int)SML_DQueue_uint_size(&queue));
 
     while(!SML_DQueue_uint_empty(&queue)) {
         printf("From queue: %u\n", SML_DQueue_uint_front(&queue));
