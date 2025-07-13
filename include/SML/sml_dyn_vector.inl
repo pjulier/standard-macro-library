@@ -18,6 +18,9 @@ void SML_DVEC_IMPLNAME(init)(SML_DVEC_TNAME *me)
 */
 void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capacity)
 {
+    if (capacity == 0)
+        capacity = 1;
+
     me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * capacity);
     assert(me->mem != NULL);
     me->capelems = capacity;
@@ -29,6 +32,9 @@ void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capacity)
 */
 void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size)
 {
+    if (size == 0)
+        size = 1;
+
     me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * size);
     assert(me->mem != NULL);
     me->capelems = size;
