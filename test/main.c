@@ -109,7 +109,7 @@ int main(void)
     SML_EHashMap_uint_destroy(&hashMap);
 
     /*
-     * SML_CircBuf
+     * Fixed size SML_CircBuf
      */
     SML_CircBuf_uint circBuf;
     SML_CircBuf_uint_init(&circBuf);
@@ -121,4 +121,24 @@ int main(void)
         printf("From circBuf: %u\n", SML_CircBuf_uint_front(&circBuf));
         SML_CircBuf_uint_pop(&circBuf);
     }
+
+    /*
+     * SML_DQueue
+     */
+    SML_DQueue_uint queue;
+    SML_DQueue_uint_init(&queue, 2);
+    SML_DQueue_uint_push(&queue, 1);
+    SML_DQueue_uint_push(&queue, 2);
+    SML_DQueue_uint_push(&queue, 3);
+    SML_DQueue_uint_push(&queue, 4);
+    SML_DQueue_uint_push(&queue, 5);
+    SML_DQueue_uint_push(&queue, 6);
+    SML_DQueue_uint_push(&queue, 7);
+    printf("Size of queue: %u\n", SML_DQueue_uint_size(&queue));
+
+    while(!SML_DQueue_uint_empty(&queue)) {
+        printf("From queue: %u\n", SML_DQueue_uint_front(&queue));
+        SML_DQueue_uint_pop(&queue);
+    }
+    SML_DQueue_uint_destroy(&queue);
 }

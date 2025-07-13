@@ -41,3 +41,15 @@
 #undef SML_CIRCBUF_CAPACITY
 #undef SML_CIRCBUF_T
 #endif /* SML_DVEC_uint_DECL */ 
+
+/**
+ * Declare a dynamic queue of unsigned int
+*/
+#ifndef SML_DQUEUE_uint_DECL
+#define SML_DQUEUE_uint_DECL
+#define SML_DQUEUE_T unsigned int
+#define SML_DQUEUE_ID uint
+#include "SML/sml_dyn_queue.h"
+#undef SML_DQUEUE_ID
+#undef SML_DQUEUE_T
+#endif /* SML_DQUEUE_uint_DECL */ 
