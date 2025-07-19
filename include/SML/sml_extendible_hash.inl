@@ -58,6 +58,11 @@ SML_EHASH_TNAME * SML_EHASH_IMPLNAME(create)(SML_EHASH_IMPLNAME(hash_fn) hash_fn
 
 bool SML_EHASH_IMPLNAME(init)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(hash_fn) hash_fn, SML_EHASH_IMPLNAME(compare_fn) compare_fn)
 {
+    return SML_EHASH_IMPLNAME(initWithDepth)(me, hash_fn, compare_fn, SML_EHASH_INITIAL_BUCKET_DEPTH);
+}
+
+bool SML_EHASH_IMPLNAME(initWithDepth)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(hash_fn) hash_fn, SML_EHASH_IMPLNAME(compare_fn) compare_fn, unsigned int bucketDepth)
+{
     /* save hash function pointer, if key is string default can be used */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     if (hash_fn) {
@@ -98,40 +103,55 @@ bool SML_EHASH_IMPLNAME(init)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(hash_fn) h
     me->compare_fn = compare_fn;
 #endif /* SML_EHASH_ISKEYSTRING */
 
+    /* determine initial depth(s) */
+    unsigned int globalDepth;
+    if (bucketDepth < 1) {
+        bucketDepth = 1;
+        globalDepth = bucketDepth + 1;
+    } else if (bucketDepth < SML_EHASH_MAX_GLOBAL_DEPTH) {
+        globalDepth = bucketDepth + 1;
+    } else if (bucketDepth == SML_EHASH_MAX_GLOBAL_DEPTH) {
+        globalDepth = bucketDepth;
+    } else {
+        bucketDepth = SML_EHASH_MAX_GLOBAL_DEPTH;
+        globalDepth = bucketDepth;
+    }
+
     /* allocate initial directory */
-    const unsigned int numDir    = (1 << SML_EHASH_INITIAL_GLOBAL_DEPTH);
-    const unsigned int numBucket = (1 << SML_EHASH_INITIAL_BUCKET_DEPTH);
+    const unsigned int numDir    = (1 << globalDepth);
+    const unsigned int numBucket = (1 << bucketDepth);
 
     me->directory = (unsigned int *)malloc(numDir * sizeof(*me->directory));
     if (me->directory == NULL) {
-        goto err;
+        goto err1;
     }
     for (unsigned int i = 0; i < numDir; ++i) {
         /* map directories to buckets */
         me->directory[i] = i & (numBucket - 1);
     }
 
-    me->globalDepth = SML_EHASH_INITIAL_GLOBAL_DEPTH;
+    me->globalDepth = globalDepth;
     me->numEntries = 0;
 
     /* create array of buckets */
     me->buckets = (SML_EHASH_BUCKETENTRYNAME *)malloc(numBucket * sizeof(*me->buckets));
     if (me->buckets == NULL) {
-        goto err;
+        goto err2;
     }
     me->numBuckets = numBucket;
     me->capacityBuckets = numBucket;
     for (unsigned int i = 0; i < numBucket; ++i) {
         me->buckets[i].first = NULL;
         me->buckets[i].bucketSize = 0;
-        me->buckets[i].bucketDepth = SML_EHASH_INITIAL_BUCKET_DEPTH;
+        me->buckets[i].bucketDepth = bucketDepth;
     }
 
     return true;
 
-err:
-    free(me->directory);
+err2:
     free(me->buckets);
+err1:
+    free(me->directory);
     return false;
 }
 

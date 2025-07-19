@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+void  SML_uint64tobin(uint64_t value, char *str, int places);
 void  SML_uint32tobin(uint32_t value, char *str, int places);
 char* SML_strpcpy(char *dst, const char *src);
 char* SML_strdup(const char *src);

@@ -87,9 +87,13 @@ int main(void)
     printf("str_cpy: %s\n", str_dup);
     free(str_dup);
 
-    char strbin[33];
-    SML_uint32tobin(UINT32_MAX - 1, strbin, 32);
-    printf("strbin: %s\n", strbin);
+    char strbin32[33];
+    SML_uint32tobin(UINT32_MAX - 1, strbin32, 32);
+    printf("strbin: %s\n", strbin32);
+
+    char strbin64[65];
+    SML_uint64tobin(UINT64_MAX - 1, strbin64, 64);
+    printf("strbin: %s\n", strbin64);
 
     /*
      * SML_EHashMap
@@ -141,4 +145,6 @@ int main(void)
         SML_DQueue_uint_pop(&queue);
     }
     SML_DQueue_uint_destroy(&queue);
+
+    return 0;
 }

@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define SML_EHASH_INITIAL_GLOBAL_DEPTH 3
+// #define SML_EHASH_INITIAL_GLOBAL_DEPTH 3
 #define SML_EHASH_INITIAL_BUCKET_DEPTH 1
 #define SML_EHASH_MAX_BUCKET_SIZE      2
 #define SML_EHASH_MAX_GLOBAL_DEPTH     (8 * sizeof(uint32_t))
@@ -102,11 +102,11 @@ typedef struct SML_EHASH_BUCKETENTRYNAME {
 typedef struct SML_EHASH_TNAME {                           
     SML_EHASH_IMPLNAME(hash_fn) hash_fn;        /**< hash function pointer */
     SML_EHASH_IMPLNAME(compare_fn) compare_fn;  /**< compare function pointer */                             
-    unsigned int globalDepth;               /**< bit depth of "directory" */                    
-    unsigned int numEntries;                /**< total number of items */
-    unsigned int numBuckets;                /**< total number of buckets currently used */
-    unsigned int capacityBuckets;           /**< total number of buckets currently allocated */              
-    unsigned int *directory;                /**< global directory, contains indices into "buckets" */
+    unsigned int globalDepth;                   /**< bit depth of "directory" */                    
+    unsigned int numEntries;                    /**< total number of items */
+    unsigned int numBuckets;                    /**< total number of buckets currently used */
+    unsigned int capacityBuckets;               /**< total number of buckets currently allocated */              
+    unsigned int *directory;                    /**< global directory, contains indices into "buckets" */
     SML_EHASH_BUCKETENTRYNAME *buckets;         /**< array of buckets */
 } SML_EHASH_TNAME; 
 
@@ -114,6 +114,7 @@ SML_EHASH_TNAME * SML_EHASH_IMPLNAME(create)(SML_EHASH_IMPLNAME(hash_fn) hash_fn
 void          SML_EHASH_IMPLNAME(free)(SML_EHASH_TNAME *me);
 void          SML_EHASH_IMPLNAME(destroy)(SML_EHASH_TNAME *me);
 bool          SML_EHASH_IMPLNAME(init)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(hash_fn) hash_fn, SML_EHASH_IMPLNAME(compare_fn) compare_fn);
+bool          SML_EHASH_IMPLNAME(initWithDepth)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(hash_fn) hash_fn, SML_EHASH_IMPLNAME(compare_fn) compare_fn, unsigned int bucketDepth);
 void          SML_EHASH_IMPLNAME(clear)(SML_EHASH_TNAME *me);
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
