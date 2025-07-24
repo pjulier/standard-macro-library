@@ -107,7 +107,6 @@ struct SML_EHASH_ITEMNAME {
 
 typedef struct SML_EHASH_BUCKETENTRYNAME {
     unsigned int first;
-    // SML_EHASH_ITEMNAME *first;
     uint16_t bucketSize;
     uint16_t bucketDepth;
 }  SML_EHASH_BUCKETENTRYNAME;
