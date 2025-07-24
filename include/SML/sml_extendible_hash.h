@@ -77,7 +77,6 @@
 #define SML_EHASH_IDENT SML_EHASH_TYPE(SML_EHASH_T, SML_EHASH_KEYT)
 #endif
 
-// TODO: versions of these that also take the length (kind of like a std::string_view) to avoid temporary key copies with null-termination
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
 typedef uint32_t (*SML_EHASH_IMPLNAME(hash_fn))(const SML_EHASH_KEYT key, unsigned int size);
 typedef bool (*SML_EHASH_IMPLNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b, unsigned int size);
@@ -98,7 +97,6 @@ typedef struct SML_EHASH_ITEMNAME SML_EHASH_ITEMNAME;
 
 struct SML_EHASH_ITEMNAME {
     unsigned int next;
-    // SML_EHASH_ITEMNAME *next;
     SML_EHASH_KEYT key;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     unsigned int keySize;
