@@ -1,9 +1,23 @@
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include "SML/sml_string.h"
 
 // #include "logger.h" /* for print function */
+
+/*
+ * Implement a dynamic queue of type unsigned int 
+ */
+#ifndef SML_DQUEUE_EHashMap_uint_IMPL
+#define SML_DQUEUE_EHashMap_uint_IMPL
+#define SML_DQUEUE_T unsigned int
+#define SML_DQUEUE_ID EHashMap_uint
+#include "SML/sml_dyn_queue.inl"
+#undef SML_DQUEUE_ID
+#undef SML_DQUEUE_T
+#endif /* SML_DVEC_EHashMap_uint_IMPL */ 
+
 
 /* define unique template identifier */
 #ifdef SML_EHASH_ID
@@ -141,13 +155,25 @@ bool SML_EHASH_IMPLNAME(initWithDepth)(SML_EHASH_TNAME *me, SML_EHASH_IMPLNAME(h
     me->numBuckets = numBucket;
     me->capacityBuckets = numBucket;
     for (unsigned int i = 0; i < numBucket; ++i) {
-        me->buckets[i].first = NULL;
+        me->buckets[i].first = UINT_MAX;
         me->buckets[i].bucketSize = 0;
         me->buckets[i].bucketDepth = bucketDepth;
     }
 
+    /* create array of items */
+    me->itemBuf = (SML_EHASH_ITEMNAME *)malloc(SML_EHASH_INITIAL_ITEM_CAPACITY * sizeof(*me->itemBuf));
+    if (!me->itemBuf) {
+        goto err3;
+    }
+    me->capacityEntries = SML_EHASH_INITIAL_ITEM_CAPACITY;
+
+    /* init free list of items */
+    SML_DQueue_EHashMap_uint_init(&me->itemFreeList);
+
     return true;
 
+err3:
+    free(me->itemBuf);
 err2:
     free(me->buckets);
 err1:
@@ -167,19 +193,22 @@ void SML_EHASH_IMPLNAME(free)(SML_EHASH_TNAME *me)
 
 void SML_EHASH_IMPLNAME(destroy)(SML_EHASH_TNAME *me)
 {
-    /* go through buckets and free each item */
-    for (unsigned int i = 0; i < me->numBuckets; ++i) {
-        SML_EHASH_ITEMNAME *item = me->buckets[i].first;
-        SML_EHASH_ITEMNAME *next;
-        while (item != NULL) {
-            next = item->next;
+    /* if key was allocated, go through buckets and free each item key */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+    for (unsigned int i = 0; i < me->numBuckets; ++i) {
+        unsigned int itemIdx = me->buckets[i].first;
+        while (itemIdx != UINT_MAX) {
+            SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
+            itemIdx = item->next;
             free(item->key);
-#endif /* SML_EHASH_ISKEYSTRING*/
-            free(item);
-            item = next;
         }
     }
+#endif /* SML_EHASH_ISKEYSTRING*/
+
+    /* free the item free list */
+    SML_DQueue_EHashMap_uint_destroy(&me->itemFreeList);
+    /* free the itemBuf */
+    free(me->itemBuf);
     /* free the buckets array */
     free(me->buckets);
     /* free the directory array */
@@ -212,11 +241,12 @@ bool SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, S
     bucketIdx = me->directory[dirIdx];
 
     /* try direct inserting */
-    SML_EHASH_ITEMNAME *item = me->buckets[bucketIdx].first;
+    unsigned int itemIdx = me->buckets[bucketIdx].first;
     unsigned int chainLevel = 0;
 
-    while(item != NULL) {
+    while(itemIdx != UINT_MAX) {
         /* item already existing? -> overwrite */
+        SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
         if (me->compare_fn(key, item->key, keySize))
 #else
@@ -227,7 +257,7 @@ bool SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, S
             return true;
         }
         ++chainLevel;
-        item = item->next;
+        itemIdx = item->next;
     }
 
     /* still have more space in bucket? */
@@ -288,10 +318,11 @@ bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_
     dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
-    SML_EHASH_ITEMNAME *item = me->buckets[bucketIdx].first;
+    unsigned int itemIdx = me->buckets[bucketIdx].first;
 
-    while(item != NULL) {
+    while(itemIdx != UINT_MAX) {
         /* compare keys */
+        SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
         if (me->compare_fn(key, item->key, keySize))
 #else
@@ -301,7 +332,7 @@ bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_
             *data = item->data;
             return true;
         }
-        item = item->next;
+        itemIdx = item->next;
     }
 
     /* item with this key does not exist */
@@ -331,10 +362,11 @@ void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key)
     dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
-    SML_EHASH_ITEMNAME *item = me->buckets[bucketIdx].first;
-    SML_EHASH_ITEMNAME **prev = &me->buckets[bucketIdx].first;
+    unsigned int itemIdx = me->buckets[bucketIdx].first;
+    unsigned int *prevIdxPtr = &me->buckets[bucketIdx].first;
 
-    while (item) {
+    while (itemIdx != UINT_MAX) {
+        SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
         if (me->compare_fn(key, item->key, keySize))
 #else
@@ -342,17 +374,18 @@ void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key)
 #endif
         {
             /* item found, erase it */
-            *prev = item->next;
+            *prevIdxPtr = item->next;
             --me->buckets[bucketIdx].bucketSize;
             --me->numEntries;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
             free(item->key);
 #endif
-            free(item);
+            /* push index onto free list */
+            SML_DQueue_EHashMap_uint_push(&me->itemFreeList, itemIdx);
             return;
         }
-        prev = &item->next;
-        item = item->next;
+        prevIdxPtr = &item->next;
+        itemIdx = item->next;
     }
     /* arrive here, item not found */
 }
@@ -360,25 +393,26 @@ void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key)
 /**
  * @brief Clear the EHashMap
  * 
- * Removes (frees) all the items but keeps the rest of the internal structure
+ * Clears all items but keeps the rest of the internal structure
  */
 void SML_EHASH_IMPLNAME(clear)(SML_EHASH_TNAME *me)
 {
     /* loop through buckets and free all items */
     for (unsigned int i = 0; i < me->numBuckets; ++i) {
-        SML_EHASH_ITEMNAME *item = me->buckets[i].first;
-        me->buckets[i].first = NULL;
+        unsigned int itemIdx = me->buckets[i].first;
+        me->buckets[i].first = UINT_MAX;
         me->buckets[i].bucketSize = 0;
-        while (item) {
-            SML_EHASH_ITEMNAME *next = item->next;
+        while (itemIdx != UINT_MAX) {
+            SML_EHASH_ITEMNAME *const item = &me->itemBuf[itemIdx];
+            itemIdx = item->next;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
             free(item->key);
 #endif
-            free(item);
-            item = next;
         }
     }
+    /* instead of pushing everything on the free list, only set numEntries to zero */
     me->numEntries = 0;
+    SML_DQueue_EHashMap_uint_clear(&me->itemFreeList);
 }
 
 static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash)
@@ -420,7 +454,7 @@ static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash)
         SML_EHASH_BUCKETENTRYNAME *const origBucket = &me->buckets[bucketIdx];
         ++me->numBuckets;
         ++origBucket->bucketDepth;
-        me->buckets[me->numBuckets - 1].first = NULL;
+        me->buckets[me->numBuckets - 1].first = UINT_MAX;
         me->buckets[me->numBuckets - 1].bucketSize = 0;
         me->buckets[me->numBuckets - 1].bucketDepth = origBucket->bucketDepth;
 
@@ -434,28 +468,26 @@ static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash)
 
         SML_EHASH_BUCKETENTRYNAME *const newBucket = &me->buckets[me->numBuckets - 1];
 
-        /* grab the first item in the original bucket */
-        SML_EHASH_ITEMNAME *item = origBucket->first;
-        /* address of pointer to the current item */
-        SML_EHASH_ITEMNAME **prev = &origBucket->first;
+        // TODO: do this with less local variables
+        unsigned int itemIdx = origBucket->first;
+        unsigned int *prevIdxPtr = &origBucket->first;
 
-        while(item != NULL) {
+        while(itemIdx != UINT_MAX) {
+            SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
             /* save for later */
-            SML_EHASH_ITEMNAME *next = item->next;
+            unsigned int nextIdx = item->next;
 
             /* test if item needs to be moved */
             if (item->hash & (1 << (uint64_t)(origBucket->bucketDepth - 1))) {
-                /* put in new bucket */ // TODO: do this with only one **p
-                *prev = item->next;
+                *prevIdxPtr = item->next;
                 --origBucket->bucketSize;
                 item->next = newBucket->first;
-                newBucket->first = item;
+                newBucket->first = itemIdx;
                 ++newBucket->bucketSize;
-                // LOGWARN("Item %s moved to bucket: %u", item->key, me->numBuckets - 1);
             } else {
-                prev = &item->next;
+                prevIdxPtr = &item->next;
             }
-            item = next;
+            itemIdx = nextIdx;
         }
 
         // print_table(me);
@@ -477,11 +509,33 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
 static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T data, uint32_t hash, unsigned int bucketIdx)
 #endif
 {
-    SML_EHASH_ITEMNAME *item = (SML_EHASH_ITEMNAME *)malloc(sizeof(*item));
-    if (item == NULL) {
-        return NULL;
+    unsigned int idx;
+    bool fromFreeList;
+
+    if (SML_DQueue_EHashMap_uint_empty(&me->itemFreeList)) {
+        /* append new item */
+        if (me->numEntries + 1 > me->capacityEntries) {
+            /* reallocate buffer */
+            unsigned int newCap = me->numEntries * 3 / 2 + 1;
+            SML_EHASH_ITEMNAME *p = (SML_EHASH_ITEMNAME *)realloc(me->itemBuf, newCap * sizeof(*me->itemBuf));
+            if (!p) {
+                return NULL;
+            }
+            me->itemBuf = p;
+            me->capacityEntries = newCap;
+        }
+        idx = me->numEntries;
+        fromFreeList = false;
+    } else {
+        /* use existing free spot */
+        idx = SML_DQueue_EHashMap_uint_front(&me->itemFreeList);
+        fromFreeList = true;
     }
 
+    /* get the item pointer */
+    SML_EHASH_ITEMNAME *const item = &me->itemBuf[idx];
+
+    /* set item data */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     item->key = SML_strviewdup(key, keySize);
 #elif SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
@@ -494,13 +548,15 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
     item->data = data;
     item->hash = hash;
 
-    SML_EHASH_ITEMNAME *first = me->buckets[bucketIdx].first;
-    item->next = first;
-    me->buckets[bucketIdx].first = item;
+    unsigned int firstIdx = me->buckets[bucketIdx].first;
+    item->next = firstIdx;
+    me->buckets[bucketIdx].first = idx;
     ++me->buckets[bucketIdx].bucketSize;
     ++me->numEntries;
 
-    // LOGWARN("Item %s inserted into bucket: %u", key, bucketIdx);
+    if (fromFreeList) {
+        SML_DQueue_EHashMap_uint_pop(&me->itemFreeList);
+    }
 
     return item;
 }

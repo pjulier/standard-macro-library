@@ -87,6 +87,11 @@ SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
     return me->mem[me->front];
 }
 
+void SML_DQUEUE_IMPLNAME(clear)(SML_DQUEUE_TNAME *me)
+{
+    me->back = 0;
+    me->front = 0;
+}
 
 void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me) {
     free(me->mem);

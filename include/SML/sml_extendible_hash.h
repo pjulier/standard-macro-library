@@ -4,10 +4,23 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/*
+ * Declare a dynamic queue of type unsigned int 
+ */
+#ifndef SML_DQUEUE_EHashMap_uint_DECL
+#define SML_DQUEUE_EHashMap_uint_DECL
+#define SML_DQUEUE_T unsigned int
+#define SML_DQUEUE_ID EHashMap_uint
+#include "SML/sml_dyn_queue.h"
+#undef SML_DQUEUE_ID
+#undef SML_DQUEUE_T
+#endif /* SML_DVEC_EHashMap_uint_DECL */ 
+
+#define SML_EHASH_INITIAL_ITEM_CAPACITY 1
 // #define SML_EHASH_INITIAL_GLOBAL_DEPTH 3
-#define SML_EHASH_INITIAL_BUCKET_DEPTH 1
-#define SML_EHASH_MAX_BUCKET_SIZE      2
-#define SML_EHASH_MAX_GLOBAL_DEPTH     (8 * sizeof(uint32_t))
+#define SML_EHASH_INITIAL_BUCKET_DEPTH  1
+#define SML_EHASH_MAX_BUCKET_SIZE       2
+#define SML_EHASH_MAX_GLOBAL_DEPTH      (8 * sizeof(uint32_t))
 
 #define SML_EHASH_KEYCLASS_FIXED      0
 #define SML_EHASH_KEYCLASS_CSTRING    1
@@ -84,7 +97,8 @@ extern "C" {
 typedef struct SML_EHASH_ITEMNAME SML_EHASH_ITEMNAME;
 
 struct SML_EHASH_ITEMNAME {
-    SML_EHASH_ITEMNAME *next;
+    unsigned int next;
+    // SML_EHASH_ITEMNAME *next;
     SML_EHASH_KEYT key;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     unsigned int keySize;
@@ -94,20 +108,24 @@ struct SML_EHASH_ITEMNAME {
 };
 
 typedef struct SML_EHASH_BUCKETENTRYNAME {
-    SML_EHASH_ITEMNAME *first;
+    unsigned int first;
+    // SML_EHASH_ITEMNAME *first;
     uint16_t bucketSize;
     uint16_t bucketDepth;
 }  SML_EHASH_BUCKETENTRYNAME;
 
 typedef struct SML_EHASH_TNAME {                           
     SML_EHASH_IMPLNAME(hash_fn) hash_fn;        /**< hash function pointer */
-    SML_EHASH_IMPLNAME(compare_fn) compare_fn;  /**< compare function pointer */                             
+    SML_EHASH_IMPLNAME(compare_fn) compare_fn;  /**< compare function pointer */
+    SML_EHASH_BUCKETENTRYNAME *buckets;         /**< array of buckets */
+    SML_EHASH_ITEMNAME *itemBuf;                /**< array of items */    
+    SML_DQueue_EHashMap_uint itemFreeList;      /**< free list containing free indices into itemBuf */                     
+    unsigned int *directory;                    /**< global directory, contains indices into "buckets" */
     unsigned int globalDepth;                   /**< bit depth of "directory" */                    
-    unsigned int numEntries;                    /**< total number of items */
+    unsigned int numEntries;                    /**< total number of items currently used */
+    unsigned int capacityEntries;               /**< total number of items currently allocated */
     unsigned int numBuckets;                    /**< total number of buckets currently used */
     unsigned int capacityBuckets;               /**< total number of buckets currently allocated */              
-    unsigned int *directory;                    /**< global directory, contains indices into "buckets" */
-    SML_EHASH_BUCKETENTRYNAME *buckets;         /**< array of buckets */
 } SML_EHASH_TNAME; 
 
 SML_EHASH_TNAME * SML_EHASH_IMPLNAME(create)(SML_EHASH_IMPLNAME(hash_fn) hash_fn, SML_EHASH_IMPLNAME(compare_fn) compare_fn);

@@ -110,6 +110,12 @@ int main(void)
     SML_EHashMap_uint_get(&hashMap, "two", &two);
     SML_EHashMap_uint_get(&hashMap, "three", &three);
     printf("one: %u, two: %u, three %u\n", one, two, three);
+
+    SML_EHashMap_uint_erase(&hashMap, "two");
+    SML_EHashMap_uint_insert(&hashMap, "two", 4);
+    SML_EHashMap_uint_get(&hashMap, "two", &two);
+    printf("one: %u, two (modified): %u, three %u\n", one, two, three);
+
     SML_EHashMap_uint_destroy(&hashMap);
 
     /*
