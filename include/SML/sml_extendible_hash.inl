@@ -415,7 +415,7 @@ void SML_EHASH_IMPLNAME(clear)(SML_EHASH_TNAME *me)
     SML_DQueue_EHashMap_uint_clear(&me->itemFreeList);
 }
 
-static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash)
+static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash) // TODO: return bucketIdx
 {
     /* recursively split bucket or grow directory until item with "hash" can be inserted */
     while (me->globalDepth <= SML_EHASH_MAX_GLOBAL_DEPTH) {
@@ -458,9 +458,9 @@ static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash)
         me->buckets[me->numBuckets - 1].bucketSize = 0;
         me->buckets[me->numBuckets - 1].bucketDepth = origBucket->bucketDepth;
 
-        /* set the relevant directories to the new bucket */
-        const unsigned int stride = 1 << (prevBucketDepth + 1);
-        const unsigned int offset = dirIdx & (stride - 1);
+        /* set the relevant directories to the new bucket (the ones with the "1" in the next higher bit) */
+        const uint64_t stride = 1 << (prevBucketDepth + 1);
+        const uint64_t offset = (stride >> 1) | (dirIdx & ((stride >> 1) - 1));
 
         for(unsigned int i = offset; i < (uint64_t)(1 << me->globalDepth); i += stride) {
             me->directory[i] = me->numBuckets - 1;
