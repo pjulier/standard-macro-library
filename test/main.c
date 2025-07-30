@@ -19,6 +19,8 @@ int main(void)
      */
     SML_DVec_uint vec;
     SML_DVec_uint_init(&vec);
+    SML_DVec_uint_reserve(&vec, 10);
+    printf("Capacity of vec after reserve(): %lu\n", SML_DVec_uint_capacity(&vec));
 
     for (int i = 0; i < 5; ++i) {
         SML_DVec_uint_push_back(&vec, i + 1);
@@ -26,10 +28,14 @@ int main(void)
 
     SML_DVec_uint_set(&vec, 1, 42);
     SML_DVec_uint_set(&vec, 3, 21);
+
+    SML_DVec_uint_shrink_to_fit(&vec);
+    printf("Capacity of vec after shrink_to_fit(): %lu\n", SML_DVec_uint_capacity(&vec));
     
     for (unsigned int i = 0; i < 5; ++i) {
         printf("vec[%u]: %u\n", i, SML_DVec_uint_get(&vec, i));
     }
+
     SML_DVec_uint_destroy(&vec);
 
     /*

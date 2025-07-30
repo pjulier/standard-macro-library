@@ -55,6 +55,7 @@ void SML_DVEC_IMPLNAME(free)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt);
+void SML_DVEC_IMPLNAME(shrink_to_fit)(SML_DVEC_TNAME *me);
 void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt);
 void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val);
 void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, size_t cnt);

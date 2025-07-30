@@ -106,7 +106,20 @@ void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt)
 }
 
 /**
- * Reserve enough size for cnt elements
+ * @brief Shrink the allocated memory to the number of elements
+ * NOTE: Does nothing if the vector is empty or size == capacity
+ */
+void SML_DVEC_IMPLNAME(shrink_to_fit)(SML_DVEC_TNAME *me)
+{
+    if (me->elems > 0 && me->elems != me->capelems) {
+        me->mem = (SML_DVEC_T *)realloc(me->mem, me->elems * sizeof(*me->mem));
+        assert(me->mem);
+        me->capelems = me->elems;
+    }
+}
+
+/**
+ * Reserve enough capacity for cnt elements
  * Does nothing if cnt <= capacity
 */
 void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt)

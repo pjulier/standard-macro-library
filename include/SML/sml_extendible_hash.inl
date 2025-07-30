@@ -462,7 +462,7 @@ static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash) // TO
         const uint64_t stride = 1 << (prevBucketDepth + 1);
         const uint64_t offset = (stride >> 1) | (dirIdx & ((stride >> 1) - 1));
 
-        for(unsigned int i = offset; i < (uint64_t)(1 << me->globalDepth); i += stride) {
+        for(uint64_t i = offset; i < (uint64_t)(1 << me->globalDepth); i += stride) {
             me->directory[i] = me->numBuckets - 1;
         }
 
