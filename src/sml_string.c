@@ -106,3 +106,40 @@ int SML_strtoi(const char *str, const char **end)
 
     return sign * result;
 }
+
+char* SML_itoa(char *dst, unsigned int size, int val, int base)
+{
+    static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    
+    /* max length with val = INT_MIN and base = 2 */
+    char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
+
+    if (base < 2 || base > 36) {
+        return NULL;
+    }
+
+    /* start from the end */
+    char* p = &buffer[sizeof(buffer) - 1];
+    *p = '\0';
+
+    const int isNeg = val < 0;
+
+    do {
+        *(--p) = digits[35 + (val % base)];
+        val /= base;
+    } while (val);
+
+    if (isNeg) {
+        *(--p) = '-';
+    }
+
+    const unsigned int l_size = &buffer[sizeof(buffer)] - p;
+
+    /* if str does not fit we only copy the end part */
+    if (l_size > size) {
+       /* no memmove necessary since we copy to the left */
+        return memcpy(dst, &buffer[sizeof(buffer) - size], size);
+    }
+    /* no memmove necessary since we copy to the left */
+    return memcpy(dst, p, l_size);
+}

@@ -95,11 +95,15 @@ int main(void)
 
     char strbin32[33];
     SML_uint32tobin(UINT32_MAX - 1, strbin32, 32);
-    printf("strbin: %s\n", strbin32);
+    printf("strbin32: %s\n", strbin32);
 
     char strbin64[65];
     SML_uint64tobin(UINT64_MAX - 1, strbin64, 64);
-    printf("strbin: %s\n", strbin64);
+    printf("strbin64: %s\n", strbin64);
+
+    char stritoa[8 * sizeof(int) + 2];
+    SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MIN, 10);
+    printf("stritoa: %s\n", stritoa);
 
     /*
      * SML_EHashMap
