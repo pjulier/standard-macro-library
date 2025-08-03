@@ -133,6 +133,14 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(begin)(const SML_DVEC_TNAME *me)
 }
 
 /**
+ * Return a const pointer to the beginning of memory buffer
+*/
+static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cbegin)(const SML_DVEC_TNAME *me)
+{
+    return (const SML_DVEC_T *)me->mem;
+}
+
+/**
  * Return a pointer to the nth element
 */
 static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, size_t idx)
