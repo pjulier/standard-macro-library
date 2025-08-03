@@ -52,16 +52,16 @@ static void SML__swap_void(void *a, void *b, size_t bytes)
 {
     uint8_t *_a = a;
     uint8_t *_b = b;
-    enum { SWAP_GENERIC_SIZE = 32 };
-    uint8_t tmp[SWAP_GENERIC_SIZE];
-    while (bytes > SWAP_GENERIC_SIZE)
+    enum { SML_SWAP_GENERIC_SIZE = 32 };
+    uint8_t tmp[SML_SWAP_GENERIC_SIZE];
+    while (bytes > SML_SWAP_GENERIC_SIZE)
     {
-        memcpy(tmp, _a,  SWAP_GENERIC_SIZE);
-        memcpy(_a,  _b,  SWAP_GENERIC_SIZE);
-        memcpy(_b,  tmp, SWAP_GENERIC_SIZE);
-        _a += SWAP_GENERIC_SIZE;
-        _b += SWAP_GENERIC_SIZE;
-        bytes -= SWAP_GENERIC_SIZE;
+        memcpy(tmp, _a,  SML_SWAP_GENERIC_SIZE);
+        memcpy(_a,  _b,  SML_SWAP_GENERIC_SIZE);
+        memcpy(_b,  tmp, SML_SWAP_GENERIC_SIZE);
+        _a += SML_SWAP_GENERIC_SIZE;
+        _b += SML_SWAP_GENERIC_SIZE;
+        bytes -= SML_SWAP_GENERIC_SIZE;
     }
     while (bytes > 0)
     {
@@ -77,15 +77,15 @@ void SML_fill_void(void *dst, void *val, size_t count, size_t width)
 
     while (count-- > 0)
     {
-        enum { FILL_GENERIC_SIZE = 32 };
+        enum { SML_FILL_GENERIC_SIZE = 32 };
         uint8_t *_src = (uint8_t *)val;
         size_t bytes = width;
-        while (bytes > FILL_GENERIC_SIZE)
+        while (bytes > SML_FILL_GENERIC_SIZE)
         {
-            memcpy(_dst, _src, FILL_GENERIC_SIZE);
-            _dst += FILL_GENERIC_SIZE;
-            _src += FILL_GENERIC_SIZE;
-            bytes -= FILL_GENERIC_SIZE;
+            memcpy(_dst, _src, SML_FILL_GENERIC_SIZE);
+            _dst += SML_FILL_GENERIC_SIZE;
+            _src += SML_FILL_GENERIC_SIZE;
+            bytes -= SML_FILL_GENERIC_SIZE;
         }
         while (bytes > 0)
         {
