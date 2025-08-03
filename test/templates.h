@@ -1,3 +1,6 @@
+#ifndef INCLUDE_TEMPLATES_H
+#define INCLUDE_TEMPLATES_H
+
 /**
  * Declare dynamic vector of unsigned int
 */
@@ -53,3 +56,5 @@
 #undef SML_DQUEUE_ID
 #undef SML_DQUEUE_T
 #endif /* SML_DQUEUE_uint_DECL */ 
+
+#endif /* INCLUDE_TEMPLATES_H */
