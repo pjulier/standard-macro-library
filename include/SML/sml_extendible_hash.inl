@@ -397,18 +397,19 @@ void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key)
  */
 void SML_EHASH_IMPLNAME(clear)(SML_EHASH_TNAME *me)
 {
-    /* loop through buckets and free all items */
+    /* loop through buckets and invalidate items */
     for (unsigned int i = 0; i < me->numBuckets; ++i) {
         unsigned int itemIdx = me->buckets[i].first;
         me->buckets[i].first = UINT_MAX;
         me->buckets[i].bucketSize = 0;
+        /* if keys are allocated, free those */
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
         while (itemIdx != UINT_MAX) {
             SML_EHASH_ITEMNAME *const item = &me->itemBuf[itemIdx];
             itemIdx = item->next;
-#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
             free(item->key);
-#endif
         }
+#endif
     }
     /* instead of pushing everything on the free list, only set numEntries to zero */
     me->numEntries = 0;
