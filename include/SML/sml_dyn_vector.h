@@ -81,7 +81,7 @@ static inline SML_DVEC_T SML_DVEC_IMPLNAME(front)(const SML_DVEC_TNAME *me)
 }
 
 /**
- * Return a pointer to the  first element
+ * Return a pointer to the first element
  * NOTE: undefined behaviour if size == 0
 */
 static inline SML_DVEC_T* SML_DVEC_IMPLNAME(front_p)(const SML_DVEC_TNAME *me)
@@ -100,11 +100,11 @@ static inline SML_DVEC_T SML_DVEC_IMPLNAME(back)(const SML_DVEC_TNAME *me)
 
 /**
  * Return a pointer to the last element
- * NOTE: undefined behaviour if size == 0
+ * NOTE: if size == 0, the beginning of memory buffer is returned
 */
 static inline SML_DVEC_T* SML_DVEC_IMPLNAME(back_p)(const SML_DVEC_TNAME *me)
 {
-    return &me->mem[me->elems - 1];
+    return &me->mem[(me->elems != 0) * (me->elems - 1)];
 }
 
 /**
@@ -138,6 +138,26 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(begin)(const SML_DVEC_TNAME *me)
 static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cbegin)(const SML_DVEC_TNAME *me)
 {
     return (const SML_DVEC_T *)me->mem;
+}
+
+/**
+ * Return a pointer to the theoretical element that would
+ * follow the last element
+ * NOTE: if size == 0, the beginning of memory buffer is returned
+*/
+static inline SML_DVEC_T * SML_DVEC_IMPLNAME(end)(const SML_DVEC_TNAME *me)
+{
+    return &me->mem[me->elems];
+}
+
+/**
+ * Return a const pointer to the theoretical element that would
+ * follow the last element
+ * NOTE: if size == 0, the beginning of memory buffer is returned
+*/
+static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cend)(const SML_DVEC_TNAME *me)
+{
+    return (const SML_DVEC_T *)&me->mem[me->elems];
 }
 
 /**

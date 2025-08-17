@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <limits.h>
+#include <stddef.h>
 
 #include "SML/sml.h"
 #include "templates.h"
@@ -15,12 +16,10 @@ static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
 int main(void)
 {
     /*
-     * SML_DVec_xxx
+     * SML_DVec
      */
     SML_DVec_uint vec;
     SML_DVec_uint_init(&vec);
-    SML_DVec_uint_reserve(&vec, 10);
-    printf("Capacity of vec after reserve(): %lu\n", SML_DVec_uint_capacity(&vec));
 
     for (int i = 0; i < 5; ++i) {
         SML_DVec_uint_push_back(&vec, i + 1);
@@ -28,15 +27,77 @@ int main(void)
 
     SML_DVec_uint_set(&vec, 1, 42);
     SML_DVec_uint_set(&vec, 3, 21);
+    printf("Capacity of vec: %lu\n", SML_DVec_uint_capacity(&vec));
+
+    SML_DVec_uint_reserve(&vec, 10);
+    printf("Capacity of vec after reserve(): %lu\n", SML_DVec_uint_capacity(&vec));
 
     SML_DVec_uint_shrink_to_fit(&vec);
     printf("Capacity of vec after shrink_to_fit(): %lu\n", SML_DVec_uint_capacity(&vec));
     
-    for (unsigned int i = 0; i < 5; ++i) {
-        printf("vec[%u]: %u\n", i, SML_DVec_uint_get(&vec, i));
+    for (const unsigned int *p = SML_DVec_uint_cbegin(&vec); p != SML_DVec_uint_cend(&vec); ++p) {
+        printf("vec[%i]: %u\n", (int)(ptrdiff_t)(p - SML_DVec_uint_cbegin(&vec)), *p);
     }
 
     SML_DVec_uint_destroy(&vec);
+
+    /*
+     * SML_EHashMap
+     */
+    SML_EHashMap_uint hashMap;
+    SML_EHashMap_uint_init(&hashMap, NULL, NULL);
+
+    SML_EHashMap_uint_insert(&hashMap, "one", 1);
+    SML_EHashMap_uint_insert(&hashMap, "two", 2);
+    SML_EHashMap_uint_insert(&hashMap, "three", 3);
+
+    unsigned int one, two, three;
+    SML_EHashMap_uint_get(&hashMap, "one", &one);
+    SML_EHashMap_uint_get(&hashMap, "two", &two);
+    SML_EHashMap_uint_get(&hashMap, "three", &three);
+    printf("one: %u, two: %u, three %u\n", one, two, three);
+
+    SML_EHashMap_uint_erase(&hashMap, "two");
+    SML_EHashMap_uint_insert(&hashMap, "two", 4);
+    SML_EHashMap_uint_get(&hashMap, "two", &two);
+    printf("one: %u, two (modified): %u, three %u\n", one, two, three);
+
+    SML_EHashMap_uint_destroy(&hashMap);
+
+    /*
+     * Fixed size SML_CircBuf
+     */
+    SML_CircBuf_uint circBuf;
+    SML_CircBuf_uint_init(&circBuf);
+    SML_CircBuf_uint_push(&circBuf, 1);
+    SML_CircBuf_uint_push(&circBuf, 2);
+    SML_CircBuf_uint_push(&circBuf, 3);
+
+    while (!SML_CircBuf_uint_empty(&circBuf)) {
+        printf("From circBuf: %u\n", SML_CircBuf_uint_front(&circBuf));
+        SML_CircBuf_uint_pop(&circBuf);
+    }
+
+    /*
+     * SML_DQueue
+     */
+    SML_DQueue_uint queue;
+    SML_DQueue_uint_initWithCapacity(&queue, 1);
+    SML_DQueue_uint_push(&queue, 1);
+    SML_DQueue_uint_push(&queue, 2);
+    SML_DQueue_uint_push(&queue, 3);
+    SML_DQueue_uint_push(&queue, 4);
+    SML_DQueue_uint_push(&queue, 5);
+    SML_DQueue_uint_push(&queue, 6);
+    SML_DQueue_uint_push(&queue, 7);
+    printf("Size of queue: %u\n", (unsigned int)SML_DQueue_uint_size(&queue));
+
+    while(!SML_DQueue_uint_empty(&queue)) {
+        printf("From queue: %u\n", SML_DQueue_uint_front(&queue));
+        SML_DQueue_uint_pop(&queue);
+    }
+    SML_DQueue_uint_destroy(&queue);
+
 
     /*
      * SML_fill
@@ -104,63 +165,6 @@ int main(void)
     char stritoa[8 * sizeof(int) + 2];
     SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MIN, 10);
     printf("stritoa: %s\n", stritoa);
-
-    /*
-     * SML_EHashMap
-     */
-    SML_EHashMap_uint hashMap;
-    SML_EHashMap_uint_init(&hashMap, NULL, NULL);
-
-    SML_EHashMap_uint_insert(&hashMap, "one", 1);
-    SML_EHashMap_uint_insert(&hashMap, "two", 2);
-    SML_EHashMap_uint_insert(&hashMap, "three", 3);
-
-    unsigned int one, two, three;
-    SML_EHashMap_uint_get(&hashMap, "one", &one);
-    SML_EHashMap_uint_get(&hashMap, "two", &two);
-    SML_EHashMap_uint_get(&hashMap, "three", &three);
-    printf("one: %u, two: %u, three %u\n", one, two, three);
-
-    SML_EHashMap_uint_erase(&hashMap, "two");
-    SML_EHashMap_uint_insert(&hashMap, "two", 4);
-    SML_EHashMap_uint_get(&hashMap, "two", &two);
-    printf("one: %u, two (modified): %u, three %u\n", one, two, three);
-
-    SML_EHashMap_uint_destroy(&hashMap);
-
-    /*
-     * Fixed size SML_CircBuf
-     */
-    SML_CircBuf_uint circBuf;
-    SML_CircBuf_uint_init(&circBuf);
-    SML_CircBuf_uint_push(&circBuf, 1);
-    SML_CircBuf_uint_push(&circBuf, 2);
-    SML_CircBuf_uint_push(&circBuf, 3);
-
-    while (!SML_CircBuf_uint_empty(&circBuf)) {
-        printf("From circBuf: %u\n", SML_CircBuf_uint_front(&circBuf));
-        SML_CircBuf_uint_pop(&circBuf);
-    }
-
-    /*
-     * SML_DQueue
-     */
-    SML_DQueue_uint queue;
-    SML_DQueue_uint_initWithCapacity(&queue, 1);
-    SML_DQueue_uint_push(&queue, 1);
-    SML_DQueue_uint_push(&queue, 2);
-    SML_DQueue_uint_push(&queue, 3);
-    SML_DQueue_uint_push(&queue, 4);
-    SML_DQueue_uint_push(&queue, 5);
-    SML_DQueue_uint_push(&queue, 6);
-    SML_DQueue_uint_push(&queue, 7);
-    printf("Size of queue: %u\n", (unsigned int)SML_DQueue_uint_size(&queue));
-
-    while(!SML_DQueue_uint_empty(&queue)) {
-        printf("From queue: %u\n", SML_DQueue_uint_front(&queue));
-        SML_DQueue_uint_pop(&queue);
-    }
-    SML_DQueue_uint_destroy(&queue);
 
     return 0;
 }
