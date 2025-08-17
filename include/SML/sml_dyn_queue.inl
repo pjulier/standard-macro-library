@@ -8,6 +8,8 @@
 #define SML_DQUEUE_IDENT SML_DQUEUE_T
 #endif
 
+#include <stddef.h> /* for ptrdiff_t */
+
 #define SML_DQUEUE_INITIAL_CAPACITY    2
 #define SML_DQUEUE_GROWTH_FACTOR_NUM   3
 #define SML_DQUEUE_GROWTH_FACTOR_DENUM 2
@@ -38,8 +40,8 @@ void SML_DQUEUE_IMPLNAME(initWithCapacity)(SML_DQUEUE_TNAME *me, size_t initialC
 }
 
 size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
-    ssize_t size;
-    size = (ssize_t)me->back - me->front;
+    ptrdiff_t size;
+    size = (ptrdiff_t)me->back - me->front;
     if (size < 0) {
         size += me->capacity;
     }

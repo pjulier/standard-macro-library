@@ -5,6 +5,8 @@
 #ifndef INCLUDE_SML_CIRCULAR_BUFFER
 #define INCLUDE_SML_CIRCULAR_BUFFER
 
+#include <stddef.h> /* for ptrdiff_t */
+
 /* function names */
 #define SML_CIRCBUF_GLUE_IMPL(type, name) SML_CircBuf_ ## type ## _ ## name 
 #define SML_CIRCBUF_IMPL(type, name) SML_CIRCBUF_GLUE_IMPL(type, name) 
@@ -74,8 +76,8 @@ static inline SML_CIRCBUF_T SML_CIRCBUF_IMPLNAME(front)(const SML_CIRCBUF_TNAME 
 */
 static inline unsigned int SML_CIRCBUF_IMPLNAME(size)(const SML_CIRCBUF_TNAME *me)
 {
-    ssize_t size;
-    size = (ssize_t)me->back - me->front;
+    ptrdiff_t size;
+    size = (ptrdiff_t)me->back - me->front;
     if (size < 0) {
         size += SML_CIRCBUF_CAPACITY;
     }
