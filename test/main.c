@@ -166,5 +166,19 @@ int main(void)
     SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MIN, 10);
     printf("stritoa: %s\n", stritoa);
 
+    /*
+     * SML_Logger
+     */
+
+    /* set the lowest log level */
+    SML_Logger_setLogLevelConsole(SML_LOG_LVL_TRACE);
+    int i = 0;
+    LOGFATAL("This is a %s message... i = %i", "fatal", i++);
+    LOGERROR("This is a %s message... i = %i", "error", i++);
+    LOGWARN ("This is a %s message... i = %i", "warn ", i++);
+    LOGINFO ("This is a %s message... i = %i", "info ", i++);
+    LOGDEBUG("This is a %s message... i = %i", "debug", i++);
+    LOGTRACE("This is a %s message... i = %i", "trace", i++);
+
     return 0;
 }
