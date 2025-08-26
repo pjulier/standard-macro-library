@@ -93,9 +93,8 @@ typedef bool (*SML_EHASH_IMPLNAME(compare_fn))(const SML_EHASH_KEYT a, const SML
 extern "C" {
 #endif
 
-typedef struct SML_EHASH_ITEMNAME SML_EHASH_ITEMNAME;
 
-struct SML_EHASH_ITEMNAME {
+typedef struct SML_EHASH_ITEMNAME {
     unsigned int next;
     SML_EHASH_KEYT key;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
@@ -103,7 +102,7 @@ struct SML_EHASH_ITEMNAME {
 #endif
     SML_EHASH_T data;
     uint32_t hash;
-};
+} SML_EHASH_ITEMNAME;
 
 typedef struct SML_EHASH_BUCKETENTRYNAME {
     unsigned int first;

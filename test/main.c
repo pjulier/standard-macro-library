@@ -149,6 +149,13 @@ int main(void)
     p = SML_strpcpy(p, "has ");
     p = SML_strpcpy(p, "3 parts");
     printf("str_buf: %s\n", str_buf);
+
+    char buf[10];
+    size_t n;
+    n = SML_strscpy(buf, "1234", 10);
+    printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
+    n = SML_strscpy(buf, "123456789A", 10);
+    printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
     
     char *str_dup = SML_strdup(str_buf);
     printf("str_cpy: %s\n", str_dup);

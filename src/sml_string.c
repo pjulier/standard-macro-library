@@ -31,6 +31,22 @@ char* SML_strpcpy(char *dst, const char *src)
   return (char *)memcpy(dst, src, len + 1) + len;
 }
 
+size_t SML_strscpy(char *dst, const char *src, size_t dstSize)
+{
+    if (dstSize == 0) {
+        return 0;
+    }
+    --dstSize;
+    size_t i = 0;
+    for ( ; i < dstSize; ++i) {
+        if (*src == '\0')
+            break;
+        *dst++ = *src++;
+    }
+    *dst = '\0';
+    return i + (i == dstSize);
+}
+
 char* SML_strdup(const char *src)
 {
     const size_t len = strlen(src);
