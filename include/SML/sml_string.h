@@ -2,6 +2,7 @@
 #define INCLUDE_SML_STRING_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "sml_common.h"
 
