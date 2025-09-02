@@ -30,6 +30,11 @@ extern "C" {
 #endif
 
 /**
+ * @brief Console write function prototype for the logger
+ */
+typedef void (*SML_Logger_consoleWriteFn)(const char *msg, unsigned int level);
+
+/**
  * @brief Datatype for the log level
  */
 typedef int SML_LogLevel;
@@ -38,11 +43,13 @@ typedef int SML_LogLevel;
  * @brief The main logger struct
  */
 typedef struct SML_Logger {
-    SML_LogLevel logLvlConsole; /**< lowest log level that is printed to console */
-    SML_LogLevel logLvlFile;    /**< lowest log level that is printed to file */
-    bool isInit;                /**< is logger initialized? */
+    SML_Logger_consoleWriteFn writeConsole; /**< console write function */
+    SML_LogLevel logLvlConsole;             /**< lowest log level that is printed to console */
+    SML_LogLevel logLvlFile;                /**< lowest log level that is printed to file */
+    bool isInit;                            /**< is logger initialized? */
 } SML_Logger;
 
+void SML_Logger_setConsoleWriteFn(SML_Logger_consoleWriteFn fn);
 bool SML_Logger_setLogLevelConsole(SML_LogLevel level);
 void SML_Logger_output(SML_LogLevel level, const char *msg, ...);
 

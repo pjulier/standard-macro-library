@@ -13,6 +13,11 @@ static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
     return (arr[idxA] > arr[idxB]) - (arr[idxA] < arr[idxB]);
 }
 
+static void console_write(const char *msg, unsigned int level)
+{
+    printf("Log level: %u, Message: %s\n", level, msg);
+}
+
 int main(void)
 {
     /*
@@ -176,16 +181,30 @@ int main(void)
     /*
      * SML_Logger
      */
-
+    int i;
     /* set the lowest log level */
     SML_Logger_setLogLevelConsole(SML_LOG_LVL_TRACE);
-    int i = 0;
+
+    /* overwrite default console write function and log some stuff */
+    SML_Logger_setConsoleWriteFn(console_write);
+    i = 0;
     LOGFATAL("This is a %s message... i = %i", "fatal", i++);
     LOGERROR("This is a %s message... i = %i", "error", i++);
     LOGWARN ("This is a %s message... i = %i", "warn ", i++);
     LOGINFO ("This is a %s message... i = %i", "info ", i++);
     LOGDEBUG("This is a %s message... i = %i", "debug", i++);
     LOGTRACE("This is a %s message... i = %i", "trace", i++);
+
+    /* set back to the default write function */
+    SML_Logger_setConsoleWriteFn(NULL);
+    i = 0;
+    LOGFATAL("This is a %s message... i = %i", "fatal", i++);
+    LOGERROR("This is a %s message... i = %i", "error", i++);
+    LOGWARN ("This is a %s message... i = %i", "warn ", i++);
+    LOGINFO ("This is a %s message... i = %i", "info ", i++);
+    LOGDEBUG("This is a %s message... i = %i", "debug", i++);
+    LOGTRACE("This is a %s message... i = %i", "trace", i++);
+
 
     return 0;
 }
