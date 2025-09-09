@@ -42,17 +42,21 @@ extern "C" {
 #endif
 
 /* 
- * Vector type definition
+ * Circular buffer  type definition
  */
 typedef struct SML_CIRCBUF_TNAME {
     SML_CIRCBUF_T buf[SML_CIRCBUF_CAPACITY];
-    unsigned long front;
-    unsigned long back;
+    size_t front;
+    size_t back;
 } SML_CIRCBUF_TNAME;
 
-void SML_CIRCBUF_IMPLNAME(init)(SML_CIRCBUF_TNAME *me);
-void SML_CIRCBUF_IMPLNAME(push)(SML_CIRCBUF_TNAME *me, SML_CIRCBUF_T val);
-void SML_CIRCBUF_IMPLNAME(pop)(SML_CIRCBUF_TNAME *me);
+/**
+ * Initialize the circular buffer
+*/
+static inline void SML_CIRCBUF_IMPLNAME(init)(SML_CIRCBUF_TNAME *me)
+{
+    memset(me, 0, sizeof(*me));
+}
 
 /**
  * Returns true if the circular buffer is empty
@@ -60,6 +64,29 @@ void SML_CIRCBUF_IMPLNAME(pop)(SML_CIRCBUF_TNAME *me);
 static inline bool SML_CIRCBUF_IMPLNAME(empty)(const SML_CIRCBUF_TNAME *me)
 {
     return me->front == me->back;
+}
+
+/**
+ * Push an element to the back of the circular buffer
+*/
+static inline void SML_CIRCBUF_IMPLNAME(push)(SML_CIRCBUF_TNAME *me, SML_CIRCBUF_T val)
+{
+    me->buf[me->back] = val;
+    me->back = (me->back + 1) % SML_CIRCBUF_CAPACITY;
+
+    /* buffer is full (front == back)? */
+    if (SML_CIRCBUF_IMPLNAME(empty)(me)) {
+        /* discard front element */
+        me->front = (me->front + 1) % SML_CIRCBUF_CAPACITY;
+    }
+}
+
+/**
+ * Pop an element from the front of the circular buffer
+*/
+static inline void SML_CIRCBUF_IMPLNAME(pop)(SML_CIRCBUF_TNAME *me)
+{
+    me->front = (me->front + 1) % SML_CIRCBUF_CAPACITY;
 }
 
 /**
