@@ -141,11 +141,13 @@ static bool          SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t ha
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
 static bool          SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T data);
 static bool          SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T *data);
+static SML_EHASH_T*  SML_EHASH_IMPLNAME(get_p)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize);
 static void          SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize);
 
 #else
 static bool          SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T data);
 static bool          SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T *data);
+static SML_EHASH_T*  SML_EHASH_IMPLNAME(get_p)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key);
 static void          SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key);
 
 #endif
@@ -450,6 +452,49 @@ static bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT ke
 
     /* item with this key does not exist */
     return false;
+}
+
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+static SML_EHASH_T*  SML_EHASH_IMPLNAME(get_p)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize)
+#else
+static SML_EHASH_T* SML_EHASH_IMPLNAME(get_p)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key)
+#endif
+{
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
+    if (key == NULL) {
+        return NULL;
+    }
+#endif /* SML_EHASH_KEYCLASS */
+
+    uint32_t hash, dirIdx;
+    unsigned int bucketIdx;
+
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+    hash = (*me->hash_fn)(key, keySize);
+#else
+    hash = (*me->hash_fn)(key);
+#endif
+    dirIdx = hash & ((1U << me->globalDepth) - 1);
+    bucketIdx = me->directory[dirIdx];
+
+    unsigned int itemIdx = me->buckets[bucketIdx].first;
+
+    while(itemIdx != UINT_MAX) {
+        /* compare keys */
+        SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+        if (me->compare_fn(key, item->key, keySize))
+#else
+        if (me->compare_fn(key, item->key))
+#endif
+        {
+            return &item->data;
+        }
+        itemIdx = item->next;
+    }
+
+    /* item with this key does not exist */
+    return NULL;
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW

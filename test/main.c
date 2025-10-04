@@ -133,6 +133,9 @@ int main(void)
         printf("key: %s, value: %u\n", it.item->key, it.item->data);
     }
 
+    unsigned int *two_p = SML_EHashMap_uint_get_p(&hashMap, "two");
+    printf("two by pointer: %u\n", *two_p);
+
     SML_EHashMap_uint_clear(&hashMap);
 
     SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap);
