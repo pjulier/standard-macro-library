@@ -122,6 +122,22 @@ int main(void)
     SML_EHashMap_uint_get(&hashMap, "two", &two);
     printf("one: %u, two (modified): %u, three %u\n", one, two, three);
 
+    SML_EHashMap_uint_insert(&hashMap, "two", 2);
+
+    SML_EHashMap_uint_insert(&hashMap, "four", 4);
+    SML_EHashMap_uint_insert(&hashMap, "five", 5);
+    SML_EHashMap_uint_insert(&hashMap, "six", 6);
+
+    /* iterate over all items */
+    for (SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap); !SML_EHashMap_uint_isEndIt(&hashMap, &it); SML_EHashMap_uint_nextIt(&hashMap, &it)) {
+        printf("key: %s, value: %u\n", it.item->key, it.item->data);
+    }
+
+    SML_EHashMap_uint_clear(&hashMap);
+
+    SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap);
+    printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMap_uint_isEndIt(&hashMap, &it) ? "" : "NOT");
+
     SML_EHashMap_uint_destroy(&hashMap);
 
     /*
