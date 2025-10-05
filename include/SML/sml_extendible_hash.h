@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "SML/sml_string.h"
+
 /*
  * Implement a dynamic queue of type unsigned int 
  */
