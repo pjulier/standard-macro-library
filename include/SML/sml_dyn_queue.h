@@ -69,6 +69,14 @@ static SML_DQUEUE_TNAME * SML_DQUEUE_IMPLNAME(create)(void)
     return me;
 }
 
+static void SML_DQUEUE_IMPLNAME(free)(SML_DQUEUE_TNAME *me)
+{
+    if (me != NULL) {
+        SML_DQUEUE_IMPLNAME(destroy)(me);
+        free(me);
+    }
+}
+
 static void SML_DQUEUE_IMPLNAME(init)(SML_DQUEUE_TNAME *me)
 {
     SML_DQUEUE_IMPLNAME(initWithCapacity)(me, SML_DQUEUE_INITIAL_CAPACITY);
@@ -84,6 +92,11 @@ static void SML_DQUEUE_IMPLNAME(initWithCapacity)(SML_DQUEUE_TNAME *me, size_t i
     me->back = 0;
     me->mem = (SML_DQUEUE_T *)malloc(me->capacity * sizeof(*me->mem));
     assert(me->mem);
+}
+
+static void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me)
+{
+    free(me->mem);
 }
 
 static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
@@ -140,19 +153,6 @@ static void SML_DQUEUE_IMPLNAME(clear)(SML_DQUEUE_TNAME *me)
 {
     me->back = 0;
     me->front = 0;
-}
-
-static void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me)
-{
-    free(me->mem);
-}
-
-static void SML_DQUEUE_IMPLNAME(free)(SML_DQUEUE_TNAME *me)
-{
-    if (me != NULL) {
-        SML_DQUEUE_IMPLNAME(destroy)(me);
-        free(me);
-    }
 }
 
 static inline bool SML_DQUEUE_IMPLNAME(empty)(SML_DQUEUE_TNAME *me)
