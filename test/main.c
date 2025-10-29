@@ -100,7 +100,7 @@ int main(void)
     }
 
     SML_DVec_uint_destroy(&vec);
-
+    
     /*
      * SML_EHashMap
      */

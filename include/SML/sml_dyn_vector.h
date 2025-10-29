@@ -46,12 +46,14 @@ typedef struct SML_DVEC_TNAME {
     size_t capelems;
 } SML_DVEC_TNAME;
 
+static SML_DVEC_TNAME* SML_DVEC_IMPLNAME(create)(void);
+static SML_DVEC_TNAME* SML_DVEC_IMPLNAME(createWithCapacity)(size_t capacity);
+static SML_DVEC_TNAME* SML_DVEC_IMPLNAME(createWithSize)(size_t size);
+static void SML_DVEC_IMPLNAME(free)(SML_DVEC_TNAME *me);
 static void SML_DVEC_IMPLNAME(init)(SML_DVEC_TNAME *me);
 static void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capacity);
 static void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size);
 static void SML_DVEC_IMPLNAME(destroy)(SML_DVEC_TNAME *me);
-static SML_DVEC_TNAME *SML_DVEC_IMPLNAME(create)(void);
-static void SML_DVEC_IMPLNAME(free)(SML_DVEC_TNAME *me);
 static void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me);
 static void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me);
 static void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt);
@@ -115,9 +117,31 @@ static void SML_DVEC_IMPLNAME(destroy)(SML_DVEC_TNAME *me)
 */
 static SML_DVEC_TNAME *SML_DVEC_IMPLNAME(create)(void)
 {
-    SML_DVEC_TNAME *me = (SML_DVEC_TNAME *) malloc(sizeof(SML_DVEC_TNAME));
+    SML_DVEC_TNAME *me = (SML_DVEC_TNAME *)malloc(sizeof(SML_DVEC_TNAME));
     assert(me != NULL);
     SML_DVEC_IMPLNAME(init)(me);
+    return me;
+}
+
+/**
+ * Create a vector dynamically with initial capacity
+*/
+static SML_DVEC_TNAME *SML_DVEC_IMPLNAME(createWithCapacity)(size_t capacity)
+{
+    SML_DVEC_TNAME *me = (SML_DVEC_TNAME *)malloc(sizeof(SML_DVEC_TNAME));
+    assert(me != NULL);
+    SML_DVEC_IMPLNAME(initWithCapacity)(me, capacity);
+    return me;
+}
+
+/**
+ * Create a vector dynamically with initial size
+*/
+static SML_DVEC_TNAME *SML_DVEC_IMPLNAME(createWithSize)(size_t size)
+{
+    SML_DVEC_TNAME *me = (SML_DVEC_TNAME *)malloc(sizeof(SML_DVEC_TNAME));
+    assert(me != NULL);
+    SML_DVEC_IMPLNAME(initWithSize)(me, size);
     return me;
 }
 
