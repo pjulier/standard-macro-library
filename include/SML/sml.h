@@ -5,5 +5,6 @@
 #include "sml_algo.h"
 #include "sml_string.h"
 #include "sml_logger.h"
+#include "sml_filesystem.h"
 
 #endif /* INCLUDE_SML_H */

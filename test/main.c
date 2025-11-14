@@ -279,6 +279,46 @@ int main(void)
     LOGDEBUG("This is a %s message... i = %i", "debug", i++);
     LOGTRACE("This is a %s message... i = %i", "trace", i++);
 
+    /*
+     * SML_FS
+     */
+    SML_FS_Path path;
+    SML_FS_Dir dir;
+    SML_FS_File file;
+
+#if defined(WIN32)
+    /* get the current working directory */
+    SML_FS_getCwd(&path);
+    _tprintf(TEXT("CWD: %s\n"), path.buf);
+
+    /* list all files in working directory */
+    _tprintf(TEXT("Entries in: %s\n"), path.buf);
+    if (SML_FS_openDir(&dir, &path)) {
+        while (SML_FS_getNextFile(&dir, &file)) {
+            if (file.extension[0] == SML_FS_STR('\0')) {
+                _tprintf(TEXT("\t[%s] %s\n"), file.isDir ? TEXT("D") : TEXT("F"), file.name);
+            } else {
+                _tprintf(TEXT("\t[%s] %s, ext: %s\n"), file.isDir ? TEXT("D") : TEXT("F"), file.name, file.extension);
+            }
+        }
+    }
+#else
+    /* get the current working directory */
+    SML_FS_getCwd(&path);
+    printf("CWD: %s\n", path.buf);
+
+    /* list all files in working directory */
+    printf("Entries in: %s\n", path.buf);
+    if (SML_FS_openDir(&dir, &path)) {
+        while (SML_FS_getNextFile(&dir, &file)) {
+            if (file.extension[0] == '\0') {
+                printf("\t[%s] %s\n", file.isDir ? "D" : "F", file.name);
+            } else {
+                printf("\t[%s] %s, ext: %s\n", file.isDir ? "D" : "F", file.name, file.extension);
+            }
+        }
+    }
+#endif
 
     return 0;
 }
