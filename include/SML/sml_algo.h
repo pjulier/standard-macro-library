@@ -4,6 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void SML_fill_void(void *dst, void *val, size_t count, size_t width);
 void SML_fill_float(float *dst, float val, size_t count);
 void SML_fill_int(int *dst, int val, size_t count);
@@ -17,5 +21,9 @@ static inline uint32_t SML_pcg_hash(uint32_t input)
     uint32_t word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
     return (word >> 22u) ^ word;
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_SML_ALGO_H */

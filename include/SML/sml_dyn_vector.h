@@ -41,9 +41,9 @@
  * Vector type definition
  */
 typedef struct SML_DVEC_TNAME {
-    SML_DVEC_T *mem;
-    size_t elems;
-    size_t capelems;
+    SML_DVEC_T *data;
+    size_t size;
+    size_t capacity;
 } SML_DVEC_TNAME;
 
 static SML_DVEC_TNAME* SML_DVEC_IMPLNAME(create)(void);
@@ -81,10 +81,10 @@ static void SML_DVEC_IMPLNAME(initWithCapacity)(SML_DVEC_TNAME *me, size_t capac
     if (capacity == 0)
         capacity = 1;
 
-    me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * capacity);
-    assert(me->mem != NULL);
-    me->capelems = capacity;
-    me->elems = 0;
+    me->data = (SML_DVEC_T *) malloc(sizeof(*me->data) * capacity);
+    assert(me->data != NULL);
+    me->capacity = capacity;
+    me->size = 0;
 }
 
 /**
@@ -95,10 +95,10 @@ static void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size)
     if (size == 0)
         size = 1;
 
-    me->mem = (SML_DVEC_T *) malloc(sizeof(*me->mem) * size);
-    assert(me->mem != NULL);
-    me->capelems = size;
-    me->elems = size;
+    me->data = (SML_DVEC_T *) malloc(sizeof(*me->data) * size);
+    assert(me->data != NULL);
+    me->capacity = size;
+    me->size = size;
 }
 
 /**
@@ -106,10 +106,10 @@ static void SML_DVEC_IMPLNAME(initWithSize)(SML_DVEC_TNAME *me, size_t size)
 */
 static void SML_DVEC_IMPLNAME(destroy)(SML_DVEC_TNAME *me)
 {
-    free(me->mem);
-    me->mem = NULL;
-    me->elems = 0;
-    me->capelems = 0;
+    free(me->data);
+    me->data = NULL;
+    me->size = 0;
+    me->capacity = 0;
 }
 
 /**
@@ -161,7 +161,7 @@ static void SML_DVEC_IMPLNAME(free)(SML_DVEC_TNAME *me)
 */
 static void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me)
 {
-    me->elems = 0;
+    me->size = 0;
 }
 
 /**
@@ -169,10 +169,10 @@ static void SML_DVEC_IMPLNAME(clear)(SML_DVEC_TNAME *me)
 */
 static void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me)
 {
-    size_t newCap = SML_DVEC_GROWTH_FACTOR_NUM * me->capelems / SML_DVEC_GROWTH_FACTOR_DEN + 1; /* plus one for initial alloc */
-    me->mem = (SML_DVEC_T *)realloc(me->mem, newCap * sizeof(*me->mem));
-    assert(me->mem);
-    me->capelems = newCap;
+    size_t newCap = SML_DVEC_GROWTH_FACTOR_NUM * me->capacity / SML_DVEC_GROWTH_FACTOR_DEN + (me->capacity == 1); /* plus one for initial alloc */
+    me->data = (SML_DVEC_T *)realloc(me->data, newCap * sizeof(*me->data));
+    assert(me->data);
+    me->capacity = newCap;
 }
 
 /**
@@ -181,10 +181,10 @@ static void SML_DVEC_IMPLNAME(grow)(SML_DVEC_TNAME *me)
 */
 static void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt)
 {
-    me->mem = (SML_DVEC_T *)realloc(me->mem, cnt * sizeof(*me->mem));
-    assert(me->mem);
-    me->elems = cnt;
-    me->capelems = cnt;
+    me->data = (SML_DVEC_T *)realloc(me->data, cnt * sizeof(*me->data));
+    assert(me->data);
+    me->size = cnt;
+    me->capacity = cnt;
 }
 
 /**
@@ -193,10 +193,10 @@ static void SML_DVEC_IMPLNAME(resize)(SML_DVEC_TNAME *me, size_t cnt)
  */
 static void SML_DVEC_IMPLNAME(shrink_to_fit)(SML_DVEC_TNAME *me)
 {
-    if (me->elems > 0 && me->elems != me->capelems) {
-        me->mem = (SML_DVEC_T *)realloc(me->mem, me->elems * sizeof(*me->mem));
-        assert(me->mem);
-        me->capelems = me->elems;
+    if (me->size > 0 && me->size != me->capacity) {
+        me->data = (SML_DVEC_T *)realloc(me->data, me->size * sizeof(*me->data));
+        assert(me->data);
+        me->capacity = me->size;
     }
 }
 
@@ -206,12 +206,12 @@ static void SML_DVEC_IMPLNAME(shrink_to_fit)(SML_DVEC_TNAME *me)
 */
 static void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt)
 {
-    if (cnt <= me->capelems) 
+    if (cnt <= me->capacity) 
         return;
 
-    me->mem = (SML_DVEC_T *)realloc(me->mem, cnt * sizeof(*me->mem));
-    assert(me->mem);
-    me->capelems = cnt;
+    me->data = (SML_DVEC_T *)realloc(me->data, cnt * sizeof(*me->data));
+    assert(me->data);
+    me->capacity = cnt;
 }
 
 /**
@@ -220,10 +220,10 @@ static void SML_DVEC_IMPLNAME(reserve)(SML_DVEC_TNAME *me, size_t cnt)
 */
 static void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val)
 {
-    if (me->elems >= me->capelems) {
+    if (me->size >= me->capacity) {
         SML_DVEC_IMPLNAME(grow)(me);
     }
-    me->mem[me->elems++] = val;
+    me->data[me->size++] = val;
 }
 
 /**
@@ -232,22 +232,22 @@ static void SML_DVEC_IMPLNAME(push_back)(SML_DVEC_TNAME *me, SML_DVEC_T val)
 */
 static void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVEC_T *data, size_t cnt)
 {
-    const size_t reqCap = me->elems + cnt;
-    const size_t tempElems = me->elems;
+    const size_t reqCap = me->size + cnt;
+    const size_t tempSize = me->size;
 
-    if (me->capelems < reqCap) {
-        size_t newCap = me->capelems;
+    if (me->capacity < reqCap) {
+        size_t newCap = me->capacity;
         /* search for the growth iteration that fits */
-        while (newCap < reqCap) { newCap = SML_DVEC_GROWTH_FACTOR_NUM * newCap / SML_DVEC_GROWTH_FACTOR_DEN + 1; }
+        while (newCap < reqCap) { newCap = SML_DVEC_GROWTH_FACTOR_NUM * newCap / SML_DVEC_GROWTH_FACTOR_DEN + (newCap == 1); }
         /* resize the vector, also updates number of elements */
         SML_DVEC_IMPLNAME(resize)(me, newCap);
     }
 
     /* copy at original end of vector */
-    memcpy(me->mem + tempElems, data, cnt * sizeof(*me->mem));
+    memcpy(me->data + tempSize, data, cnt * sizeof(*me->data));
 
     /* set size to correct value */
-    me->elems = reqCap;
+    me->size = reqCap;
 }
 
 /**
@@ -256,7 +256,7 @@ static void SML_DVEC_IMPLNAME(push_back_block)(SML_DVEC_TNAME *me, const SML_DVE
 */
 static void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, size_t idx, const SML_DVEC_T *data, size_t cnt)
 {
-    memcpy(me->mem + idx, data, cnt * sizeof(*me->mem));
+    memcpy(me->data + idx, data, cnt * sizeof(*me->data));
 }
 
 /**
@@ -265,8 +265,8 @@ static void SML_DVEC_IMPLNAME(set_block)(SML_DVEC_TNAME *me, size_t idx, const S
  */
 static void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val)
 {
-    for (size_t i = 0; i < me->elems; ++i) {
-        me->mem[i] = val;
+    for (size_t i = 0; i < me->size; ++i) {
+        me->data[i] = val;
     }
 }
 
@@ -276,7 +276,7 @@ static void SML_DVEC_IMPLNAME(fill)(SML_DVEC_TNAME *me, SML_DVEC_T val)
  */
 static void SML_DVEC_IMPLNAME(fillBytes)(SML_DVEC_TNAME *me, unsigned char byteVal)
 {
-    memset(&me->mem, byteVal, sizeof(*me->mem) * me->elems);
+    memset(&me->data, byteVal, sizeof(*me->data) * me->size);
 }
 
 /**
@@ -284,7 +284,7 @@ static void SML_DVEC_IMPLNAME(fillBytes)(SML_DVEC_TNAME *me, unsigned char byteV
 */
 static inline bool SML_DVEC_IMPLNAME(empty)(const SML_DVEC_TNAME *me)
 {
-    return me->elems == 0;
+    return me->size == 0;
 }
 
 /**
@@ -293,7 +293,7 @@ static inline bool SML_DVEC_IMPLNAME(empty)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T SML_DVEC_IMPLNAME(front)(const SML_DVEC_TNAME *me)
 {
-    return me->mem[0];
+    return me->data[0];
 }
 
 /**
@@ -302,7 +302,7 @@ static inline SML_DVEC_T SML_DVEC_IMPLNAME(front)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T* SML_DVEC_IMPLNAME(front_p)(const SML_DVEC_TNAME *me)
 {
-    return me->mem;
+    return me->data;
 }
 
 /**
@@ -311,7 +311,7 @@ static inline SML_DVEC_T* SML_DVEC_IMPLNAME(front_p)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T SML_DVEC_IMPLNAME(back)(const SML_DVEC_TNAME *me)
 {
-    return me->mem[me->elems - 1];
+    return me->data[me->size - 1];
 }
 
 /**
@@ -320,7 +320,7 @@ static inline SML_DVEC_T SML_DVEC_IMPLNAME(back)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T* SML_DVEC_IMPLNAME(back_p)(const SML_DVEC_TNAME *me)
 {
-    return &me->mem[(me->elems != 0) * (me->elems - 1)];
+    return &me->data[(me->size != 0) * (me->size - 1)];
 }
 
 /**
@@ -329,7 +329,7 @@ static inline SML_DVEC_T* SML_DVEC_IMPLNAME(back_p)(const SML_DVEC_TNAME *me)
 */
 static inline void SML_DVEC_IMPLNAME(set)(SML_DVEC_TNAME *me, size_t idx, SML_DVEC_T val)
 {
-    me->mem[idx] = val;
+    me->data[idx] = val;
 }
 
 /** 
@@ -337,7 +337,7 @@ static inline void SML_DVEC_IMPLNAME(set)(SML_DVEC_TNAME *me, size_t idx, SML_DV
  */
 static inline size_t SML_DVEC_IMPLNAME(capacity)(const SML_DVEC_TNAME *me)
 {
-    return me->capelems;
+    return me->capacity;
 }
 
 /**
@@ -345,7 +345,7 @@ static inline size_t SML_DVEC_IMPLNAME(capacity)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T * SML_DVEC_IMPLNAME(begin)(const SML_DVEC_TNAME *me)
 {
-    return me->mem;
+    return me->data;
 }
 
 /**
@@ -353,7 +353,7 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(begin)(const SML_DVEC_TNAME *me)
 */
 static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cbegin)(const SML_DVEC_TNAME *me)
 {
-    return (const SML_DVEC_T *)me->mem;
+    return (const SML_DVEC_T *)me->data;
 }
 
 /**
@@ -363,7 +363,7 @@ static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cbegin)(const SML_DVEC_TNAME 
 */
 static inline SML_DVEC_T * SML_DVEC_IMPLNAME(end)(const SML_DVEC_TNAME *me)
 {
-    return &me->mem[me->elems];
+    return &me->data[me->size];
 }
 
 /**
@@ -373,7 +373,7 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(end)(const SML_DVEC_TNAME *me)
 */
 static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cend)(const SML_DVEC_TNAME *me)
 {
-    return (const SML_DVEC_T *)&me->mem[me->elems];
+    return (const SML_DVEC_T *)&me->data[me->size];
 }
 
 /**
@@ -381,7 +381,7 @@ static inline const SML_DVEC_T * SML_DVEC_IMPLNAME(cend)(const SML_DVEC_TNAME *m
 */
 static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, size_t idx)
 {
-    return &me->mem[idx];
+    return &me->data[idx];
 }
 
 /**
@@ -389,7 +389,7 @@ static inline SML_DVEC_T * SML_DVEC_IMPLNAME(get_p)(const SML_DVEC_TNAME *me, si
 */
 static inline size_t SML_DVEC_IMPLNAME(size)(const SML_DVEC_TNAME *me)
 {
-    return me->elems;
+    return me->size;
 }
 
 /**
@@ -397,7 +397,7 @@ static inline size_t SML_DVEC_IMPLNAME(size)(const SML_DVEC_TNAME *me)
 */
 static inline SML_DVEC_T SML_DVEC_IMPLNAME(get)(const SML_DVEC_TNAME *me, size_t idx)
 {
-    return me->mem[idx];
+    return me->data[idx];
 }
 
 #undef SML_DVEC_IDENT

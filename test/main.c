@@ -4,6 +4,11 @@
 
 #include "SML/sml.h"
 
+typedef struct Point {
+    float x;
+    float y;
+} Point;
+
 /**
  * Implement dynamic vector of unsigned int
 */
@@ -51,18 +56,30 @@
 /**
  * Implement a dynamic queue of unsigned int
 */
-#ifndef SML_DQueue_uint_DECL
-#define SML_DQueue_uint_DECL
+#ifndef SML_DQueue_uint_IMPL
+#define SML_DQueue_uint_IMPL
 #define SML_DQUEUE_T unsigned int
 #define SML_DQUEUE_ID uint
 #include "SML/sml_dyn_queue.h"
 #undef SML_DQUEUE_ID
 #undef SML_DQUEUE_T
-#endif /* SML_DQueue_uint_DECL */ 
+#endif /* SML_DQueue_uint_IMPL */ 
+
+/**
+ * Implement a dynamic stack of points
+*/
+#ifndef SML_DStack_uint_IMPL
+#define SML_DStack_uint_IMPL
+#define SML_DSTACK_T Point
+#define SML_DSTACK_ID point
+#include "SML/sml_dyn_stack.h"
+#undef SML_DSTACK_ID
+#undef SML_DSTACK_T
+#endif /* SML_DStack_uint_IMPL */ 
 
 static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
 {
-    int *arr = sort_arr;
+    int *arr = (int*)sort_arr;
     const int idxA = *(int *)a;
     const int idxB = *(int *)b;
     return (arr[idxA] > arr[idxB]) - (arr[idxA] < arr[idxB]);
@@ -171,12 +188,34 @@ int main(void)
     SML_DQueue_uint_push(&queue, 7);
     printf("Size of queue: %u\n", (unsigned int)SML_DQueue_uint_size(&queue));
 
-    while(!SML_DQueue_uint_empty(&queue)) {
+    while (!SML_DQueue_uint_empty(&queue)) {
         printf("From queue: %u\n", SML_DQueue_uint_front(&queue));
         SML_DQueue_uint_pop(&queue);
     }
     SML_DQueue_uint_destroy(&queue);
 
+    /*
+     * SML_DStack
+     */
+    SML_DStack_point stack;
+    SML_DStack_point_init(&stack);
+    SML_DStack_point_push(&stack, (Point){1,1});
+    SML_DStack_point_push(&stack, (Point){1,2});
+    SML_DStack_point_push(&stack, (Point){1,3});
+    SML_DStack_point_push(&stack, (Point){1,4});
+    SML_DStack_point_push(&stack, (Point){1,5});
+    SML_DStack_point_push(&stack, (Point){1,6});
+    SML_DStack_point_push(&stack, (Point){1,7});
+    SML_DStack_point_push(&stack, (Point){1,8});
+    printf("Size of stack: %u\n", (unsigned int)SML_DStack_point_size(&stack));
+
+    while (!SML_DStack_point_empty(&stack)) {
+        Point temp = SML_DStack_point_back(&stack);
+        printf("From stack: x = %f, y = %f\n", temp.x, temp.y);
+        SML_DStack_point_pop(&stack);
+    }
+
+    SML_DStack_point_destroy(&stack);
 
     /*
      * SML_fill

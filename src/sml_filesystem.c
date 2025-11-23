@@ -1,5 +1,6 @@
 #include "SML/sml_filesystem.h"
 
+
 static inline void SML_FS_Dir_init(SML_FS_Dir *dir, SML_FS_Path *path);
 static bool        SML_FS_Dir_open(SML_FS_Dir *me);
 static inline void SML_FS_Dir_close(SML_FS_Dir *me);

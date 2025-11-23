@@ -1,6 +1,8 @@
 #ifndef INCLUDE_SML_COMMON_H
 #define INCLUDE_SML_COMMON_H
 
+#include <string.h> /* for memset */
+
 /*
  * Some useful macros
  */

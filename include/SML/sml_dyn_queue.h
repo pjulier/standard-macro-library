@@ -43,7 +43,7 @@ extern "C" {
  * DQueue definition
  */
 typedef struct SML_DQUEUE_TNAME {
-    SML_DQUEUE_T *mem;
+    SML_DQUEUE_T *data;
     size_t capacity;
     size_t front;
     size_t back;
@@ -57,6 +57,7 @@ static void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me);
 static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me);
 static void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val);
 static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me);
+static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(back)(SML_DQUEUE_TNAME *me);
 static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me);
 static void SML_DQUEUE_IMPLNAME(clear)(SML_DQUEUE_TNAME *me);
 static inline bool SML_DQUEUE_IMPLNAME(empty)(SML_DQUEUE_TNAME *me);
@@ -90,13 +91,13 @@ static void SML_DQUEUE_IMPLNAME(initWithCapacity)(SML_DQUEUE_TNAME *me, size_t i
     me->capacity = initialCapacity;
     me->front = 0;
     me->back = 0;
-    me->mem = (SML_DQUEUE_T *)malloc(me->capacity * sizeof(*me->mem));
-    assert(me->mem);
+    me->data = (SML_DQUEUE_T *)malloc(me->capacity * sizeof(*me->data));
+    assert(me->data);
 }
 
 static void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me)
 {
-    free(me->mem);
+    free(me->data);
 }
 
 static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
@@ -112,23 +113,23 @@ static void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val) {
     size_t next = (me->back + 1) % me->capacity;
     if (next == me->front) {
         /* buffer is full on next insert, realloc */
-        size_t newCapacity = SML_DQUEUE_GROWTH_FACTOR_NUM * me->capacity / SML_DQUEUE_GROWTH_FACTOR_DENUM + 1;
-        me->mem = (SML_DQUEUE_T *)realloc(me->mem, newCapacity * sizeof(*me->mem));
-        assert(me->mem);
+        size_t newCapacity = SML_DQUEUE_GROWTH_FACTOR_NUM * me->capacity / SML_DQUEUE_GROWTH_FACTOR_DENUM + (me->capacity == 1);
+        me->data = (SML_DQUEUE_T *)realloc(me->data, newCapacity * sizeof(*me->data));
+        assert(me->data);
 
         /* remove discontinuity */
         if (me->front > me->back) {
             size_t shift = newCapacity - me->capacity;
-            memmove(&me->mem[me->front + shift], &me->mem[me->front], (me->capacity - me->front) * sizeof(*me->mem));
+            memmove(&me->data[me->front + shift], &me->data[me->front], (me->capacity - me->front) * sizeof(*me->data));
             me->front = me->front + shift;
         }
 
         me->capacity = newCapacity;
         /* insert */
-        me->mem[me->back] = val;
+        me->data[me->back] = val;
         me->back = (me->back + 1) % me->capacity;
     } else {
-        me->mem[me->back] = val;
+        me->data[me->back] = val;
         me->back = next;
     }
 }
@@ -144,9 +145,17 @@ static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me) {
 static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
-        return 0;
+        return (SML_DQUEUE_T){};
     }
-    return me->mem[me->front];
+    return me->data[me->front];
+}
+
+static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(back)(SML_DQUEUE_TNAME *me) {
+    if (SML_DQUEUE_IMPLNAME(empty)(me)) {
+        /* should never happen*/
+        return (SML_DQUEUE_T){};
+    }
+    return me->data[me->back];
 }
 
 static void SML_DQUEUE_IMPLNAME(clear)(SML_DQUEUE_TNAME *me)

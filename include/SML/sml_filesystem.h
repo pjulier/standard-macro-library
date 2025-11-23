@@ -11,6 +11,10 @@
 #include <errno.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SML_FS_MAX_NAME_LEN 256
 #define SML_FS_STRLEN_LITERAL(s) (sizeof(s) / sizeof(s[0]) - 1)
 
@@ -220,7 +224,9 @@ static inline bool SML_FS_pathFromUtf8(SML_FS_Path *path, const char *str)
     return SML_FS_pathFromUtf8N(path, str, strlen(str));
 }
 
-
+#ifdef __cplusplus
+}
+#endif
 
 
 

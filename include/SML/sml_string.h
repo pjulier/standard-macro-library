@@ -6,6 +6,9 @@
 
 #include "sml_common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void  SML_uint64tobin(uint64_t value, char *str, int places);
 void  SML_uint32tobin(uint32_t value, char *str, int places);
@@ -32,5 +35,9 @@ char* SML_strdup(const char *src);
 char* SML_strviewdup(const char *src, unsigned int size);
 int   SML_strtoi(const char *str, const char **end);
 char* SML_itoa(char *dst, unsigned int size, int val, int base);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INCLUDE_SML_STRING_H */

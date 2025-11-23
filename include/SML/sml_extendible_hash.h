@@ -1,8 +1,10 @@
 #ifndef INCLUDE_SML_EXTENDIBLE_HASH_H
 #define INCLUDE_SML_EXTENDIBLE_HASH_H
 
+#include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "SML/sml_string.h"
 
@@ -604,7 +606,7 @@ static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash) // TO
 
         /* increase bucket number by one, if necessary allocate larger array */
         if (me->numBuckets + 1 > me->capacityBuckets) {
-            unsigned int newCap = me->numBuckets * 3 / 2 + 1;
+            unsigned int newCap = me->numBuckets * 3 / 2 + (me->capacityBuckets == 1);
             SML_EHASH_BUCKETENTRYNAME *p = (SML_EHASH_BUCKETENTRYNAME *)realloc(me->buckets, newCap * sizeof(*me->buckets));
             if (p == NULL) {
                 return false;
