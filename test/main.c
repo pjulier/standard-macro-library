@@ -214,7 +214,7 @@ int main(void)
 
     while (!SML_DStack_point_empty(&stack)) {
         Point temp = SML_DStack_point_back(&stack);
-        printf("From stack: x = %0.1f, y = %.1f\n", temp.x, temp.y);
+        printf("From stack: x = %.1f, y = %.1f\n", temp.x, temp.y);
         SML_DStack_point_pop(&stack);
     }
 

@@ -145,15 +145,24 @@ static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me) {
 static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
+#ifdef __cplusplus
         return (SML_DQUEUE_T){};
+#else
+        return (SML_DQUEUE_T){0};
+#endif
     }
     return me->data[me->front];
 }
 
-static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(back)(SML_DQUEUE_TNAME *me) {
+static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(back)(SML_DQUEUE_TNAME *me)
+{
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
+#ifdef __cplusplus
         return (SML_DQUEUE_T){};
+#else
+        return (SML_DQUEUE_T){0};
+#endif
     }
     return me->data[me->back];
 }

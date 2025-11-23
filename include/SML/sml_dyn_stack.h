@@ -147,7 +147,11 @@ static SML_DSTACK_T SML_DSTACK_IMPLNAME(back)(SML_DSTACK_TNAME *me)
 {
     if (SML_DSTACK_IMPLNAME(empty)(me)) {
         /* should never happen*/
+#ifdef __cplusplus
         return (SML_DSTACK_T){};
+#else
+        return (SML_DSTACK_T){0};
+#endif
     }
     return me->data[me->size - 1];
 }
