@@ -4,6 +4,9 @@
 
 #include "SML/sml.h"
 
+/*
+ * A dummy type for testing
+ */
 typedef struct Point {
     float x;
     float y;
@@ -68,14 +71,14 @@ typedef struct Point {
 /**
  * Implement a dynamic stack of points
 */
-#ifndef SML_DStack_uint_IMPL
-#define SML_DStack_uint_IMPL
+#ifndef SML_DStack_point_IMPL
+#define SML_DStack_point_IMPL
 #define SML_DSTACK_T Point
 #define SML_DSTACK_ID point
 #include "SML/sml_dyn_stack.h"
 #undef SML_DSTACK_ID
 #undef SML_DSTACK_T
-#endif /* SML_DStack_uint_IMPL */ 
+#endif /* SML_DStack_point_IMPL */ 
 
 static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
 {
@@ -211,7 +214,7 @@ int main(void)
 
     while (!SML_DStack_point_empty(&stack)) {
         Point temp = SML_DStack_point_back(&stack);
-        printf("From stack: x = %f, y = %f\n", temp.x, temp.y);
+        printf("From stack: x = %0.1f, y = %.1f\n", temp.x, temp.y);
         SML_DStack_point_pop(&stack);
     }
 
