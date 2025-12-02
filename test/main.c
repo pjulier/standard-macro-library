@@ -2,7 +2,14 @@
 #include <limits.h>
 #include <stddef.h>
 
+/* library header containing only basic information */
 #include "SML/sml.h"
+
+/* headers for each functionality have to be included individually */
+#include "SML/sml_algo.h"
+#include "SML/sml_string.h"
+#include "SML/sml_logger.h"
+#include "SML/sml_filesystem.h"
 
 /*
  * A dummy type for testing
@@ -95,6 +102,12 @@ static void console_write(const char *msg, unsigned int level)
 
 int main(void)
 {
+    /*
+     * Library version
+     */
+    int major, minor, release;
+    SML_getVersion(&major, &minor, &release);
+    printf("SML library version: %i.%i.%i (headers: %i.%i.%i)\n", major ,minor, release, SML_VERSION_MAJOR, SML_VERSION_MINOR, SML_VERSION_RELEASE);
     /*
      * SML_DVec
      */
