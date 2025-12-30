@@ -42,7 +42,7 @@ extern "C" {
 #endif
 
 /* 
- * Circular buffer  type definition
+ * Circular buffer type definition
  */
 typedef struct SML_CIRCBUF_TNAME {
     SML_CIRCBUF_T buf[SML_CIRCBUF_CAPACITY];

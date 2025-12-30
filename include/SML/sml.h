@@ -7,7 +7,7 @@
  * SML library version macros
  */
 #define SML_VERSION_MAJOR   0
-#define SML_VERSION_MINOR   1
+#define SML_VERSION_MINOR   2
 #define SML_VERSION_RELEASE 0
 
 #ifdef __cplusplus
