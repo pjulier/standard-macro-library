@@ -7,6 +7,7 @@
 #include <limits.h>
 
 #include "SML/sml_string.h"
+#include "SML/sml_common.h"
 
 /*
  * Implement a dynamic queue of type unsigned int 
@@ -333,7 +334,7 @@ static void SML_EHASH_IMPLNAME(destroy)(SML_EHASH_TNAME *me)
     /* free the directory array */
     free(me->directory);
     /* zero everything */
-    memset(me, 0, sizeof(*me));
+    SML_ZEROP(me);
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW

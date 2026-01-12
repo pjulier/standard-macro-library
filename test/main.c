@@ -20,7 +20,7 @@ typedef struct Point {
     float y;
 } Point;
 
-/**
+/*
  * Implement dynamic vector of unsigned int
 */
 #ifndef SML_DVec_uint_IMPL
@@ -32,7 +32,7 @@ typedef struct Point {
 #undef SML_DVEC_T
 #endif /* SML_DVec_uint_IMPL */ 
 
-/**
+/*
  * Implement hash map of type unsigned int
 */
 #ifndef SML_EHashMap_uint_IMPL
@@ -50,7 +50,7 @@ typedef struct Point {
 #undef SML_EHASH_T
 #endif /* SML_EHashMap_uint_IMPL */
 
-/**
+/*
  * Implement circular buffer of unsigned int and capacity of 8
 */
 #ifndef SML_CircBuf_uint_IMPL
@@ -64,7 +64,7 @@ typedef struct Point {
 #undef SML_CIRCBUF_T
 #endif /* SML_CircBuf_uint_IMPL */ 
 
-/**
+/*
  * Implement a dynamic queue of unsigned int
 */
 #ifndef SML_DQueue_uint_IMPL
@@ -76,7 +76,7 @@ typedef struct Point {
 #undef SML_DQUEUE_T
 #endif /* SML_DQueue_uint_IMPL */ 
 
-/**
+/*
  * Implement a dynamic stack of points
 */
 #ifndef SML_DStack_point_IMPL

@@ -7,6 +7,8 @@
 
 #include <stddef.h> /* for ptrdiff_t */
 
+#include "SML/sml_common.h"
+
 /* function names */
 #define SML_CIRCBUF_GLUE_IMPL(type, name) SML_CircBuf_ ## type ## _ ## name 
 #define SML_CIRCBUF_IMPL(type, name) SML_CIRCBUF_GLUE_IMPL(type, name) 
@@ -55,7 +57,7 @@ typedef struct SML_CIRCBUF_TNAME {
 */
 static inline void SML_CIRCBUF_IMPLNAME(init)(SML_CIRCBUF_TNAME *me)
 {
-    memset(me, 0, sizeof(*me));
+    SML_ZEROP(me);
 }
 
 /**
