@@ -32,19 +32,24 @@ static inline void SML_vec3_assign(SMLvec3 a, float v0, float v1, float v2);
 static inline void SML_vec3_copy(SMLvec3 a, const SMLvec3 b);
 static inline void SML_vec3_zero(SMLvec3 a);
 static inline void SML_vec3_one(SMLvec3 a);
-static inline void SML_vec3_abs(SMLvec3 a, SMLvec3 b);
+static inline void SML_vec3_abs(SMLvec3 a, const SMLvec3 b);
 static inline float SML_vec3_norm2(const SMLvec3 a);
 static inline float SML_vec3_norm(const SMLvec3 a);
+static inline void SML_vec3_scale(SMLvec3 a, float s);
 static inline void SML_vec3_add(SMLvec3 a, const SMLvec3 b);
 static inline void SML_vec3_sadd(SMLvec3 a, float s);
+static inline void SML_vec3_smuladd(SMLvec3 a, const SMLvec3 b, float s);
 static inline void SML_vec3_sub(SMLvec3 a, const SMLvec3 b);
 static inline void SML_vec3_ssub(SMLvec3 a, float s);
+static inline void SML_vec3_smulsub(SMLvec3 a, const SMLvec3 b, float s);
 static inline void SML_vec3_sum(SMLvec3 c, const SMLvec3 a, const SMLvec3 b);
+static inline void SML_vec3_smulsum(SMLvec3 c, const SMLvec3 a, const SMLvec3 b, float s);
 static inline void SML_vec3_diff(SMLvec3 c, const SMLvec3 a, const SMLvec3 b);
+static inline void SML_vec3_smuldiff(SMLvec3 c, const SMLvec3 a, const SMLvec3 b, float s);
 static inline void SML_vec3_mul(SMLvec3 c, const SMLvec3 a, const SMLvec3 b);
 static inline void SML_vec3_div(SMLvec3 c, const SMLvec3 a, const SMLvec3 b);
-static inline void SML_vec3_smul(SMLvec3 b, SMLvec3 a, float s);
-static inline void SML_vec3_sdiv(SMLvec3 b, SMLvec3 a, float s);
+static inline void SML_vec3_smul(SMLvec3 b, const SMLvec3 a, float s);
+static inline void SML_vec3_sdiv(SMLvec3 b, const SMLvec3 a, float s);
 static inline float SML_vec3_dotp(const SMLvec3 a, const SMLvec3 b);
 static inline void SML_vec3_cross(SMLvec3 c, const SMLvec3 a, const SMLvec3 b);
 
@@ -110,7 +115,7 @@ static inline void SML_vec3_one(SMLvec3 a)
  * @param a result
  * @param b vec3 whose absolute is taken
  */
-static inline void SML_vec3_abs(SMLvec3 a, SMLvec3 b)
+static inline void SML_vec3_abs(SMLvec3 a, const SMLvec3 b)
 {
     a[0] = fabs(b[0]);
     a[1] = fabs(b[1]);
@@ -135,6 +140,17 @@ static inline float SML_vec3_norm2(const SMLvec3 a)
 static inline float SML_vec3_norm(const SMLvec3 a)
 {
     return sqrtf(SML_vec3_norm2(a));
+}
+
+/**
+ * @brief Scale vec3 by s
+ * 
+ * @param a vec3 to be scaled
+ * @param s scaling factor
+ */
+static inline void SML_vec3_scale(SMLvec3 a, float s)
+{
+    SML_vec3_smul(a, a, s);
 }
 
 /**
@@ -168,6 +184,23 @@ static inline void SML_vec3_sadd(SMLvec3 a, float s)
 }
 
 /**
+ * @brief Add scaled vec3 to vec3
+ * 
+ * a = a + b * s
+ * 
+ * @param a vec3 to be added to
+ * @param b vec3 which is scaled and added
+ * @param s scaling factor
+ */
+static inline void SML_vec3_smuladd(SMLvec3 a, const SMLvec3 b, float s)
+{
+    a[0] += b[0] * s;
+    a[1] += b[1] * s;
+    a[2] += b[2] * s;
+}
+
+
+/**
  * @brief Subtract vec3 from vec3
  * 
  * a = a - b
@@ -198,6 +231,22 @@ static inline void SML_vec3_ssub(SMLvec3 a, float s)
 }
 
 /**
+ * @brief Subtract scaled vec3 from vec3
+ * 
+ * a = a - b * s
+ * 
+ * @param a vec3 to be subtracted from
+ * @param b vec3 which is scaled and subtracted
+ * @param s scaling factor
+ */
+static inline void SML_vec3_smulsub(SMLvec3 a, const SMLvec3 b, float s)
+{
+    a[0] -= b[0] * s;
+    a[1] -= b[1] * s;
+    a[2] -= b[2] * s;
+}
+
+/**
  * @brief Sum of two vec3's
  * 
  * c = a + b
@@ -214,6 +263,23 @@ static inline void SML_vec3_sum(SMLvec3 c, const SMLvec3 a, const SMLvec3 b)
 }
 
 /**
+ * @brief Sum of vec3 a and scaled vec3 b
+ * 
+ * c = a + b * s
+ * 
+ * @param c result
+ * @param a vec3 a
+ * @param b vec3 b
+ * @param s scalar applied to b
+ */
+static inline void SML_vec3_smulsum(SMLvec3 c, const SMLvec3 a, const SMLvec3 b, float s)
+{
+    SMLvec3 tmp;
+    SML_vec3_smul(tmp, b, s);
+    SML_vec3_sum(c, a, tmp);
+}
+
+/**
  * @brief Difference between two vec3's
  * 
  * c = a - b
@@ -227,6 +293,23 @@ static inline void SML_vec3_diff(SMLvec3 c, const SMLvec3 a, const SMLvec3 b)
     c[0] = a[0] - b[0];    
     c[1] = a[1] - b[1];
     c[2] = a[2] - b[2];  
+}
+
+/**
+ * @brief Sum of vec3 a and scaled vec3 b
+ * 
+ * c = a - b * s
+ * 
+ * @param c result
+ * @param a vec3 a
+ * @param b vec3 b
+ * @param s scalar applied to b
+ */
+static inline void SML_vec3_smuldiff(SMLvec3 c, const SMLvec3 a, const SMLvec3 b, float s)
+{
+    SMLvec3 tmp;
+    SML_vec3_smul(tmp, b, s);
+    SML_vec3_diff(c, a, tmp);
 }
 
 /**
@@ -270,7 +353,7 @@ static inline void SML_vec3_div(SMLvec3 c, const SMLvec3 a, const SMLvec3 b)
  * @param a vec3
  * @param s scalar
  */
-static inline void SML_vec3_smul(SMLvec3 b, SMLvec3 a, float s)
+static inline void SML_vec3_smul(SMLvec3 b, const SMLvec3 a, float s)
 {
     b[0] = a[0] * s;    
     b[1] = a[1] * s;
@@ -286,7 +369,7 @@ static inline void SML_vec3_smul(SMLvec3 b, SMLvec3 a, float s)
  * @param a vec3
  * @param b scalar
  */
-static inline void SML_vec3_sdiv(SMLvec3 b, SMLvec3 a, float s)
+static inline void SML_vec3_sdiv(SMLvec3 b, const SMLvec3 a, float s)
 {
     b[0] = a[0] / s;    
     b[1] = a[1] / s;

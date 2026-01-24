@@ -32,19 +32,24 @@ static inline void SML_dvec3_assign(SMLdvec3 a, double v0, double v1, double v2)
 static inline void SML_dvec3_copy(SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_zero(SMLdvec3 a);
 static inline void SML_dvec3_one(SMLdvec3 a);
-static inline void SML_dvec3_abs(SMLdvec3 a, SMLdvec3 b);
+static inline void SML_dvec3_abs(SMLdvec3 a, const SMLdvec3 b);
 static inline double SML_dvec3_norm2(const SMLdvec3 a);
 static inline double SML_dvec3_norm(const SMLdvec3 a);
+static inline void SML_dvec3_scale(SMLdvec3 a, double s);
 static inline void SML_dvec3_add(SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_sadd(SMLdvec3 a, double s);
+static inline void SML_dvec3_smuladd(SMLdvec3 a, const SMLdvec3 b, double s);
 static inline void SML_dvec3_sub(SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_ssub(SMLdvec3 a, double s);
+static inline void SML_dvec3_smulsub(SMLdvec3 a, const SMLdvec3 b, double s);
 static inline void SML_dvec3_sum(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b);
+static inline void SML_dvec3_smulsum(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b, double s);
 static inline void SML_dvec3_diff(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b);
+static inline void SML_dvec3_smuldiff(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b, double s);
 static inline void SML_dvec3_mul(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_div(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b);
-static inline void SML_dvec3_smul(SMLdvec3 b, SMLdvec3 a, double s);
-static inline void SML_dvec3_sdiv(SMLdvec3 b, SMLdvec3 a, double s);
+static inline void SML_dvec3_smul(SMLdvec3 b, const SMLdvec3 a, double s);
+static inline void SML_dvec3_sdiv(SMLdvec3 b, const SMLdvec3 a, double s);
 static inline double SML_dvec3_dotp(const SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_cross(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b);
 
@@ -110,7 +115,7 @@ static inline void SML_dvec3_one(SMLdvec3 a)
  * @param a result
  * @param b dvec3 whose absolute is taken
  */
-static inline void SML_dvec3_abs(SMLdvec3 a, SMLdvec3 b)
+static inline void SML_dvec3_abs(SMLdvec3 a, const SMLdvec3 b)
 {
     a[0] = fabs(b[0]);
     a[1] = fabs(b[1]);
@@ -135,6 +140,17 @@ static inline double SML_dvec3_norm2(const SMLdvec3 a)
 static inline double SML_dvec3_norm(const SMLdvec3 a)
 {
     return sqrt(SML_dvec3_norm2(a));
+}
+
+/**
+ * @brief Scale dvec3 by s
+ * 
+ * @param a dvec3 to be scaled
+ * @param s scaling factor
+ */
+static inline void SML_dvec3_scale(SMLdvec3 a, double s)
+{
+    SML_dvec3_smul(a, a, s);
 }
 
 /**
@@ -168,6 +184,22 @@ static inline void SML_dvec3_sadd(SMLdvec3 a, double s)
 }
 
 /**
+ * @brief Add scaled dvec3 to dvec3
+ * 
+ * a = a + b * s
+ * 
+ * @param a dvec3 to be added to
+ * @param b dvec3 which is scaled and added
+ * @param s scaling factor
+ */
+static inline void SML_dvec3_smuladd(SMLdvec3 a, const SMLdvec3 b, double s)
+{
+    a[0] += b[0] * s;
+    a[1] += b[1] * s;
+    a[2] += b[2] * s;
+}
+
+/**
  * @brief Subtract dvec3 from dvec3
  * 
  * a = a - b
@@ -198,6 +230,22 @@ static inline void SML_dvec3_ssub(SMLdvec3 a, double s)
 }
 
 /**
+ * @brief Subtract scaled dvec3 from dvec3
+ * 
+ * a = a - b * s
+ * 
+ * @param a dvec3 to be subtracted from
+ * @param b dvec3 which is scaled and subtracted
+ * @param s scaling factor
+ */
+static inline void SML_dvec3_smulsub(SMLdvec3 a, const SMLdvec3 b, double s)
+{
+    a[0] -= b[0] * s;
+    a[1] -= b[1] * s;
+    a[2] -= b[2] * s;
+}
+
+/**
  * @brief Sum of two dvec3's
  * 
  * c = a + b
@@ -214,6 +262,23 @@ static inline void SML_dvec3_sum(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b)
 }
 
 /**
+ * @brief Sum of dvec3 a and scaled dvec3 b
+ * 
+ * c = a + b * s
+ * 
+ * @param c result
+ * @param a dvec3 a
+ * @param b dvec3 b
+ * @param s scalar applied to b
+ */
+static inline void SML_dvec3_smulsum(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b, double s)
+{
+    SMLdvec3 tmp;
+    SML_dvec3_smul(tmp, b, s);
+    SML_dvec3_sum(c, a, tmp);
+}
+
+/**
  * @brief Difference between two dvec3's
  * 
  * c = a - b
@@ -227,6 +292,23 @@ static inline void SML_dvec3_diff(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b
     c[0] = a[0] - b[0];    
     c[1] = a[1] - b[1];
     c[2] = a[2] - b[2];  
+}
+
+/**
+ * @brief Difference of dvec3 a and scaled dvec3 b
+ * 
+ * c = a - b * s
+ * 
+ * @param c result
+ * @param a dvec3 a
+ * @param b dvec3 b
+ * @param s scalar applied to b
+ */
+static inline void SML_dvec3_smuldiff(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b, double s)
+{
+    SMLdvec3 tmp;
+    SML_dvec3_smul(tmp, b, s);
+    SML_dvec3_diff(c, a, tmp);
 }
 
 /**
@@ -270,7 +352,7 @@ static inline void SML_dvec3_div(SMLdvec3 c, const SMLdvec3 a, const SMLdvec3 b)
  * @param a dvec3
  * @param s scalar
  */
-static inline void SML_dvec3_smul(SMLdvec3 b, SMLdvec3 a, double s)
+static inline void SML_dvec3_smul(SMLdvec3 b, const SMLdvec3 a, double s)
 {
     b[0] = a[0] * s;    
     b[1] = a[1] * s;
@@ -286,7 +368,7 @@ static inline void SML_dvec3_smul(SMLdvec3 b, SMLdvec3 a, double s)
  * @param a dvec3
  * @param b scalar
  */
-static inline void SML_dvec3_sdiv(SMLdvec3 b, SMLdvec3 a, double s)
+static inline void SML_dvec3_sdiv(SMLdvec3 b, const SMLdvec3 a, double s)
 {
     b[0] = a[0] / s;    
     b[1] = a[1] / s;
