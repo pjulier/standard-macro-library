@@ -110,4 +110,16 @@ typedef union SMLdvec4s {
     } v;
 } SMLdvec4s;
 
+/**
+ * @brief The 3x3 matrix type
+ * 
+ */
+typedef SMLvec3 SMLmat3[3];
+
+/**
+ * @brief The double precision 3x3 matrix type
+ * 
+ */
+typedef SMLdvec3 SMLdmat3[3];
+
 #endif /* INCLUDE_SML_MATH_TYPES_H */

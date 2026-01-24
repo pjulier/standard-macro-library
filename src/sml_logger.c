@@ -24,12 +24,20 @@ static SML_Logger g_logger = {
     .isInit = false
 };
 
-// TODO: support all platforms, for now only unix
+#if defined(WIN32)
+static void SML_Logger_writeConsole(const char *msg, unsigned int color)
+{
+    // TODO: make proper function for windows
+    (void)color;
+    printf("%s\n", msg);
+}
+#else
 static void SML_Logger_writeConsole(const char *msg, unsigned int color)
 {
     static const char *colorStrings[] = { "1;30", "1;34", "1;32", "1;33", "1;31", "0;41" };
     printf("\033[%sm%s\033[0m\n", colorStrings[color], msg);
 }
+#endif
 
 static inline SML_Logger* SML_Logger_get(void)
 {

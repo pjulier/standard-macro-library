@@ -10,7 +10,8 @@
 #include "SML/sml_string.h"
 #include "SML/sml_logger.h"
 #include "SML/sml_filesystem.h"
-#include "SML/sml_vec3.h"
+#include "SML/sml_mat3.h"
+#include "SML/sml_dmat3.h"
 
 /*
  * A dummy type for testing
@@ -337,17 +338,26 @@ int main(void)
     LOGTRACE("This is a %s message... i = %i", "trace", i++);
 
     /*
-     * SML_vec3
+     * SML math
      */
     SMLvec3  a = SML_VEC3_ONE_INIT;
     SMLvec3  b = {1.0f, 2.0f, 3.0f};
     SMLvec3s c = SML_VEC3S_ZERO_INIT;
+    SMLmat3  M = SML_MAT3_ZERO_INIT;
 
     /* a = a + 1 */
     SML_vec3_sadd(a, 1.0f);
 
     /* c = a .* b */
     SML_vec3_mul(c.raw, a, b);
+
+    printf("c[0]: %.2f, c[1]: %.2f, c[2]: %.2f\n", c.v.x, c.v.y, c.v.z);
+
+    /* swizzle components */
+    M[0][2] = 1.0f;
+    M[1][0] = 1.0f;
+    M[2][1] = 1.0f;
+    SML_mat3_mulv(c.raw, M, c.raw);
 
     printf("c[0]: %.2f, c[1]: %.2f, c[2]: %.2f\n", c.v.x, c.v.y, c.v.z);
 

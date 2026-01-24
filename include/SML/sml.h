@@ -8,7 +8,7 @@
  */
 #define SML_VERSION_MAJOR   0
 #define SML_VERSION_MINOR   2
-#define SML_VERSION_RELEASE 1
+#define SML_VERSION_RELEASE 2
 
 #ifdef __cplusplus
 extern "C" {

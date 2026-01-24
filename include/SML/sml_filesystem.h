@@ -28,10 +28,8 @@ extern "C" {
 #endif
 #include <windows.h>
 
-/* define bool */
-#define bool int
-#define true  1
-#define false 0
+// TODO: deal with crappy old windows stuff that does not have bool...
+#include <stdbool.h>
 
 /*
  * NOTE: to use windows unicode paths macros UNICODE and _UNICODE
@@ -101,8 +99,8 @@ extern "C" {
 
 
 /*
-* Unix/apple?
-*/
+ * Unix/apple?
+ */
 #elif defined(__APPLE__) || defined(unix) || defined(__unix) || defined(__unix__)
 
 #include <dirent.h>
@@ -154,8 +152,8 @@ typedef struct dirent SML_FS_DIRENT;
 
 
 /*
-* Unknown platform
-*/
+ * Unknown platform
+ */
 #else
 #error "Unknown platform"
 #endif

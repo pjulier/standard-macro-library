@@ -7,8 +7,8 @@
 /*
  * Macros
  */
-#define SML_DVEC3_ZERO_INIT            {0.0f, 0.0f, 0.0f}
-#define SML_DVEC3_ONE_INIT             {1.0f, 1.0f, 1.0f}
+#define SML_DVEC3_ZERO_INIT            {0.0, 0.0, 0.0}
+#define SML_DVEC3_ONE_INIT             {1.0, 1.0, 1.0}
 #define SML_DVEC3_INIT(v0_, v1_, v2_)  {v0_, v1_, v2_}
 
 #define SML_DVEC3S_ZERO_INIT           {SML_DVEC3_ZERO_INIT}
@@ -85,9 +85,9 @@ static inline void SML_dvec3_copy(SMLdvec3 a, const SMLdvec3 b)
  */
 static inline void SML_dvec3_zero(SMLdvec3 a)
 {
-    a[0] = 0.0f;    
-    a[1] = 0.0f;
-    a[2] = 0.0f;    
+    a[0] = 0.0;    
+    a[1] = 0.0;
+    a[2] = 0.0;    
 }
 
 /**
@@ -97,9 +97,9 @@ static inline void SML_dvec3_zero(SMLdvec3 a)
  */
 static inline void SML_dvec3_one(SMLdvec3 a)
 {
-    a[0] = 1.0f;    
-    a[1] = 1.0f;
-    a[2] = 1.0f;    
+    a[0] = 1.0;    
+    a[1] = 1.0;
+    a[2] = 1.0;    
 }
 
 /**
