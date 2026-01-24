@@ -30,6 +30,8 @@ extern "C" {
 
 static inline void SML_dvec3_assign(SMLdvec3 a, double v0, double v1, double v2);
 static inline void SML_dvec3_copy(SMLdvec3 a, const SMLdvec3 b);
+static inline void SML_dvec3_negate(SMLdvec3 a);
+static inline void SML_dvec3_negate_to(SMLdvec3 a, const SMLdvec3 b);
 static inline void SML_dvec3_zero(SMLdvec3 a);
 static inline void SML_dvec3_one(SMLdvec3 a);
 static inline void SML_dvec3_abs(SMLdvec3 a, const SMLdvec3 b);
@@ -81,6 +83,33 @@ static inline void SML_dvec3_copy(SMLdvec3 a, const SMLdvec3 b)
     a[0] = b[0];    
     a[1] = b[1];
     a[2] = b[2];    
+}
+
+/**
+ * @brief Negate a dvec3
+ * 
+ * a = -a
+ * 
+ * @param a dvec3 to negate 
+ */
+static inline void SML_dvec3_negate(SMLdvec3 a)
+{
+    SML_dvec3_negate_to(a, a);
+}
+
+/**
+ * @brief Negate dvec3 b and store result in dvec3 b
+ * 
+ * a = -b
+ * 
+ * @param a result
+ * @param b dvec3 to negate
+ */
+static inline void SML_dvec3_negate_to(SMLdvec3 a, const SMLdvec3 b)
+{
+    a[0] = -b[0];
+    a[1] = -b[1];
+    a[2] = -b[2];
 }
 
 /**
