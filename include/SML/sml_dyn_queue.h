@@ -72,7 +72,7 @@ static SML_DQUEUE_TNAME * SML_DQUEUE_IMPLNAME(create)(void)
 
 static void SML_DQUEUE_IMPLNAME(free)(SML_DQUEUE_TNAME *me)
 {
-    if (me != NULL) {
+    if (me) {
         SML_DQUEUE_IMPLNAME(destroy)(me);
         free(me);
     }
@@ -100,7 +100,8 @@ static void SML_DQUEUE_IMPLNAME(destroy)(SML_DQUEUE_TNAME *me)
     free(me->data);
 }
 
-static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
+static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me)
+{
     ptrdiff_t size;
     size = (ptrdiff_t)me->back - me->front;
     if (size < 0) {
@@ -109,7 +110,8 @@ static size_t SML_DQUEUE_IMPLNAME(size)(SML_DQUEUE_TNAME *me) {
     return size;
 }
 
-static void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val) {
+static void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val)
+{
     size_t next = (me->back + 1) % me->capacity;
     if (next == me->front) {
         /* buffer is full on next insert, realloc */
@@ -134,7 +136,8 @@ static void SML_DQUEUE_IMPLNAME(push)(SML_DQUEUE_TNAME *me, SML_DQUEUE_T val) {
     }
 }
 
-static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me) {
+static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me)
+{
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
         return;
@@ -142,7 +145,8 @@ static void SML_DQUEUE_IMPLNAME(pop)(SML_DQUEUE_TNAME *me) {
     me->front = (me->front + 1) % me->capacity;
 }
 
-static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me) {
+static SML_DQUEUE_T SML_DQUEUE_IMPLNAME(front)(SML_DQUEUE_TNAME *me)
+{
     if (SML_DQUEUE_IMPLNAME(empty)(me)) {
         /* should never happen*/
 #ifdef __cplusplus

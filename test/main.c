@@ -117,66 +117,101 @@ int main(void)
     SML_DVec_uint vec;
     SML_DVec_uint_init(&vec);
 
-    for (int i = 0; i < 5; ++i) {
+    /* push back some values */
+    for (size_t i = 0; i < 5; ++i) {
         SML_DVec_uint_push_back(&vec, i + 1);
     }
 
+    /* set some values within current size */
     SML_DVec_uint_set(&vec, 1, 42);
     SML_DVec_uint_set(&vec, 3, 21);
+
+    /* current capacity */
     printf("Capacity of vec: %lu\n", SML_DVec_uint_capacity(&vec));
 
+    /* reserve capacity for 10 elements */
     SML_DVec_uint_reserve(&vec, 10);
     printf("Capacity of vec after reserve(): %lu\n", SML_DVec_uint_capacity(&vec));
 
+    /* shrink internal buffer to current size */
     SML_DVec_uint_shrink_to_fit(&vec);
     printf("Capacity of vec after shrink_to_fit(): %lu\n", SML_DVec_uint_capacity(&vec));
-    
-    for (const unsigned int *p = SML_DVec_uint_cbegin(&vec); p != SML_DVec_uint_cend(&vec); ++p) {
-        printf("vec[%i]: %u\n", (int)(ptrdiff_t)(p - SML_DVec_uint_cbegin(&vec)), *p);
+
+    /* classic loop using index as iterator */
+    for (size_t i = 0; i < SML_DVec_uint_size(&vec); ++i) {
+        printf("Classic for loop, vec[%i]: %u\n", (int)i, SML_DVec_uint_get(&vec, i));
     }
 
+    /* fill all elements up to current size with 10 */
+    SML_DVec_uint_fill(&vec, 10);
+    
+    /* loop using iterator (non-const version) */
+    for (unsigned int *p = SML_DVec_uint_begin(&vec); p != SML_DVec_uint_end(&vec); ++p) {
+        /* modify the current value */
+        unsigned int idx = (unsigned int)(ptrdiff_t)(p - SML_DVec_uint_cbegin(&vec));
+        *p += idx;
+        printf("Slightly more advanced for loop, vec[%u]: %u\n", idx, *p);
+    }
+
+    /* free internal resources */
     SML_DVec_uint_destroy(&vec);
     
     /*
      * SML_EHashMap
      */
     SML_EHashMap_uint hashMap;
+
+    /* init using standard hash and compare functions */
     SML_EHashMap_uint_init(&hashMap, NULL, NULL);
 
+    /* insert some key value pairs */
     SML_EHashMap_uint_insert(&hashMap, "one", 1);
     SML_EHashMap_uint_insert(&hashMap, "two", 2);
     SML_EHashMap_uint_insert(&hashMap, "three", 3);
 
+    /* get the current size */
+    printf("Size of hash map: %i\n", SML_EHashMap_uint_size(&hashMap));
+
+    /* get the values back */
     unsigned int one, two, three;
     SML_EHashMap_uint_get(&hashMap, "one", &one);
     SML_EHashMap_uint_get(&hashMap, "two", &two);
     SML_EHashMap_uint_get(&hashMap, "three", &three);
     printf("one: %u, two: %u, three %u\n", one, two, three);
 
-    SML_EHashMap_uint_erase(&hashMap, "two");
+    /* modify existing value */
     SML_EHashMap_uint_insert(&hashMap, "two", 4);
     SML_EHashMap_uint_get(&hashMap, "two", &two);
     printf("one: %u, two (modified): %u, three %u\n", one, two, three);
 
+    /* add some more key value pairs */
     SML_EHashMap_uint_insert(&hashMap, "two", 2);
-
     SML_EHashMap_uint_insert(&hashMap, "four", 4);
     SML_EHashMap_uint_insert(&hashMap, "five", 5);
     SML_EHashMap_uint_insert(&hashMap, "six", 6);
 
-    /* iterate over all items */
+    /* remove key value pair */
+    SML_EHashMap_uint_erase(&hashMap, "six");
+
+    /* iterate over all items (unordered) */
     for (SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap); !SML_EHashMap_uint_isEndIt(&hashMap, &it); SML_EHashMap_uint_nextIt(&hashMap, &it)) {
         printf("key: %s, value: %u\n", it.item->key, it.item->data);
     }
 
+    /* get pointer to a value */
     unsigned int *two_p = SML_EHashMap_uint_get_p(&hashMap, "two");
     printf("two by pointer: %u\n", *two_p);
 
+    /* clear map preserving already allocated resources */
     SML_EHashMap_uint_clear(&hashMap);
 
+    printf("Size of hash map: %i\n", SML_EHashMap_uint_size(&hashMap));
+
+    /* check begin and end iterator for empty map */
     SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap);
     printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMap_uint_isEndIt(&hashMap, &it) ? "" : "NOT");
 
+    /* free internal resources */
     SML_EHashMap_uint_destroy(&hashMap);
 
     /*
@@ -218,14 +253,14 @@ int main(void)
      */
     SML_DStack_point stack;
     SML_DStack_point_init(&stack);
-    SML_DStack_point_push(&stack, (Point){1,1});
     SML_DStack_point_push(&stack, (Point){1,2});
-    SML_DStack_point_push(&stack, (Point){1,3});
-    SML_DStack_point_push(&stack, (Point){1,4});
-    SML_DStack_point_push(&stack, (Point){1,5});
-    SML_DStack_point_push(&stack, (Point){1,6});
-    SML_DStack_point_push(&stack, (Point){1,7});
-    SML_DStack_point_push(&stack, (Point){1,8});
+    SML_DStack_point_push(&stack, (Point){2,4});
+    SML_DStack_point_push(&stack, (Point){3,6});
+    SML_DStack_point_push(&stack, (Point){4,8});
+    SML_DStack_point_push(&stack, (Point){5,10});
+    SML_DStack_point_push(&stack, (Point){6,12});
+    SML_DStack_point_push(&stack, (Point){7,14});
+    SML_DStack_point_push(&stack, (Point){8,16});
     printf("Size of stack: %u\n", (unsigned int)SML_DStack_point_size(&stack));
 
     while (!SML_DStack_point_empty(&stack)) {
@@ -256,7 +291,8 @@ int main(void)
      * SML_quicksort_r
      */
     int sort_arr[] = {5, 2, 3, 4, 1, 7, 8, 6};
-    int idc_arr[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    int idc_arr[]  = {0, 1, 2, 3, 4, 5, 6, 7};
+    /* sort with indirection array */
     SML_quicksort_r(idc_arr, SML_ARRCOUNT(idc_arr), sizeof(idc_arr[0]), sort_compare_fn, sort_arr);
     for (unsigned int i = 0; i < SML_ARRCOUNT(sort_arr); ++i) {
         printf("idc_arr[%u]: %i, sort_arr[idc_arr[%u]]: %i\n", i, idc_arr[i], i, sort_arr[idc_arr[i]]);
@@ -287,11 +323,12 @@ int main(void)
     p = SML_strpcpy(p, "3 parts");
     printf("str_buf: %s\n", str_buf);
 
+    /* safe string copy */
     char buf[10];
     size_t n;
     n = SML_strscpy(buf, "1234", 10);
     printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
-    n = SML_strscpy(buf, "123456789A", 10);
+    n = SML_strscpy(buf, "123456789ABC", 10);
     printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
     
     char *str_dup = SML_strdup(str_buf);
@@ -351,9 +388,10 @@ int main(void)
     /* c = a .* b */
     SML_vec3_mul(c.raw, a, b);
 
+    /* print using struct syntax */
     printf("c[0]: %.2f, c[1]: %.2f, c[2]: %.2f\n", c.v.x, c.v.y, c.v.z);
 
-    /* swizzle components */
+    /* swizzle components (row major matrix!) */
     M[0][2] = 1.0f;
     M[1][0] = 1.0f;
     M[2][1] = 1.0f;
@@ -368,6 +406,7 @@ int main(void)
     SML_FS_Dir dir;
     SML_FS_File file;
 
+    /* could be unicode on windows */
 #if defined(WIN32)
     /* get the current working directory */
     SML_FS_getCwd(&path);

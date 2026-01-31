@@ -10,16 +10,16 @@
 #include "SML/sml_common.h"
 
 /*
- * Implement a dynamic queue of type unsigned int 
+ * Implement a dynamic stack of type unsigned int - SML inception :)
  */
-#ifndef SML_DQueue_uint4EHashMap_IMPL
-#define SML_DQueue_uint4EHashMap_IMPL
-#define SML_DQUEUE_T unsigned int
-#define SML_DQUEUE_ID uint4EHashMap
-#include "SML/sml_dyn_queue.h"
-#undef SML_DQUEUE_ID
-#undef SML_DQUEUE_T
-#endif /* SML_DQueue_uint4EHashMap_IMPL */ 
+#ifndef SML_DStack_uint4EHashMap_IMPL
+#define SML_DStack_uint4EHashMap_IMPL
+#define SML_DSTACK_T unsigned int
+#define SML_DSTACK_ID uint4EHashMap
+#include "SML/sml_dyn_stack.h"
+#undef SML_DSTACK_ID
+#undef SML_DSTACK_T
+#endif /* SML_DStack_uint4EHashMap_IMPL */ 
 
 #define SML_EHASH_INITIAL_ITEM_CAPACITY 1
 // #define SML_EHASH_INITIAL_GLOBAL_DEPTH 3
@@ -121,7 +121,7 @@ typedef struct SML_EHASH_TNAME {
     SML_EHASH_IMPLNAME(compare_fn) compare_fn;  /**< compare function pointer */
     SML_EHASH_BUCKETENTRYNAME *buckets;         /**< array of buckets */
     SML_EHASH_ITEMNAME *itemBuf;                /**< array of items */    
-    SML_DQueue_uint4EHashMap itemFreeList;      /**< free list containing free indices into itemBuf */                     
+    SML_DStack_uint4EHashMap itemFreeList;      /**< free list containing free indices into itemBuf */                     
     unsigned int *directory;                    /**< global directory, contains indices into "buckets" */
     unsigned int globalDepth;                   /**< bit depth of "directory" */                    
     unsigned int numEntries;                    /**< total number of items currently used */
@@ -288,7 +288,7 @@ static bool SML_EHASH_IMPLNAME(initWithDepth)(SML_EHASH_TNAME *me, SML_EHASH_IMP
     me->capacityEntries = SML_EHASH_INITIAL_ITEM_CAPACITY;
 
     /* init free list of items */
-    SML_DQueue_uint4EHashMap_init(&me->itemFreeList);
+    SML_DStack_uint4EHashMap_init(&me->itemFreeList);
 
     return true;
 
@@ -326,7 +326,7 @@ static void SML_EHASH_IMPLNAME(destroy)(SML_EHASH_TNAME *me)
 #endif /* SML_EHASH_ISKEYSTRING*/
 
     /* free the item free list */
-    SML_DQueue_uint4EHashMap_destroy(&me->itemFreeList);
+    SML_DStack_uint4EHashMap_destroy(&me->itemFreeList);
     /* free the itemBuf */
     free(me->itemBuf);
     /* free the buckets array */
@@ -544,7 +544,7 @@ static void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT 
             free(item->key);
 #endif
             /* push index onto free list */
-            SML_DQueue_uint4EHashMap_push(&me->itemFreeList, itemIdx);
+            SML_DStack_uint4EHashMap_push(&me->itemFreeList, itemIdx);
             return;
         }
         prevIdxPtr = &item->next;
@@ -576,7 +576,7 @@ static void SML_EHASH_IMPLNAME(clear)(SML_EHASH_TNAME *me)
     }
     /* instead of pushing everything on the free list, only set numEntries to zero */
     me->numEntries = 0;
-    SML_DQueue_uint4EHashMap_clear(&me->itemFreeList);
+    SML_DStack_uint4EHashMap_clear(&me->itemFreeList);
 }
 
 static bool SML_EHASH_IMPLNAME(expand)(SML_EHASH_TNAME *me, uint32_t hash) // TODO: return bucketIdx
@@ -727,7 +727,7 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
     unsigned int idx;
     bool fromFreeList;
 
-    if (SML_DQueue_uint4EHashMap_empty(&me->itemFreeList)) {
+    if (SML_DStack_uint4EHashMap_empty(&me->itemFreeList)) {
         /* append new item */
         if (me->numEntries + 1 > me->capacityEntries) {
             /* reallocate buffer */
@@ -743,7 +743,7 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
         fromFreeList = false;
     } else {
         /* use existing free spot */
-        idx = SML_DQueue_uint4EHashMap_front(&me->itemFreeList);
+        idx = SML_DStack_uint4EHashMap_back(&me->itemFreeList);
         fromFreeList = true;
     }
 
@@ -770,7 +770,7 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
     ++me->numEntries;
 
     if (fromFreeList) {
-        SML_DQueue_uint4EHashMap_pop(&me->itemFreeList);
+        SML_DStack_uint4EHashMap_pop(&me->itemFreeList);
     }
 
     return item;

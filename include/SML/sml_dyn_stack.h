@@ -130,7 +130,8 @@ static void SML_DSTACK_IMPLNAME(grow)(SML_DSTACK_TNAME *me)
 
 static void SML_DSTACK_IMPLNAME(reserve)(SML_DSTACK_TNAME *me, size_t count)
 {
-    if (count <= me->capacity) { return; }
+    if (count <= me->capacity)
+        return;
 
     me->data = (SML_DSTACK_T *)realloc(me->data, count * sizeof(*me->data));
     assert(me->data);
@@ -139,7 +140,8 @@ static void SML_DSTACK_IMPLNAME(reserve)(SML_DSTACK_TNAME *me, size_t count)
 
 static void SML_DSTACK_IMPLNAME(pop)(SML_DSTACK_TNAME *me)
 {
-    if (SML_DSTACK_IMPLNAME(empty)(me)) { return; }
+    if (SML_DSTACK_IMPLNAME(empty)(me))
+        return;
     --me->size;
 }
 
