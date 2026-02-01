@@ -216,6 +216,11 @@ void SML_FS_advanceFile(SML_FS_Dir *dir);
 void SML_FS_closeDir(SML_FS_Dir *dir);
 bool SML_FS_exists(SML_FS_Path *path);
 
+static inline void SML_FS_pathCopy(SML_FS_Path *dst, SML_FS_Path *src)
+{
+    SML_FS_STRNCPY(dst->buf, src->buf, SML_FS_MAX_PATH_LEN);
+    dst->len = src->len;
+}
 
 static inline bool SML_FS_pathFromUtf8(SML_FS_Path *path, const char *str)
 {

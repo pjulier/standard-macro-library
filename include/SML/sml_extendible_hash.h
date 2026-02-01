@@ -85,7 +85,7 @@
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
 typedef uint32_t (*SML_EHASH_IMPLNAME(hash_fn))(const SML_EHASH_KEYT key, unsigned int size);
-typedef bool (*SML_EHASH_IMPLNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b, unsigned int size);
+typedef bool (*SML_EHASH_IMPLNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b, unsigned int sizeA, unsigned int sizeB);
 #else
 typedef uint32_t (*SML_EHASH_IMPLNAME(hash_fn))(const SML_EHASH_KEYT key);
 typedef bool (*SML_EHASH_IMPLNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b);
@@ -167,7 +167,7 @@ static bool                   SML_EHASH_IMPLNAME(isEndIt)(SML_EHASH_TNAME *me, S
 static uint32_t std_hash_fn(const char *c);
 static bool std_compare_fn(const char *a, const char *b);
 static uint32_t std_view_hash_fn(const char *c, unsigned int size);
-static bool std_view_compare_fn(const char *a, const char *b, unsigned int size);
+static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA, unsigned int sizeB);
 
 // static void print_table(UintEHashMap *t);
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
@@ -368,7 +368,7 @@ static bool SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT
         /* item already existing? -> overwrite */
         SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-        if (me->compare_fn(key, item->key, keySize))
+        if (me->compare_fn(key, item->key, keySize, item->keySize))
 #else
         if (me->compare_fn(key, item->key))
 #endif
@@ -444,7 +444,7 @@ static bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT ke
         /* compare keys */
         SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-        if (me->compare_fn(key, item->key, keySize))
+        if (me->compare_fn(key, item->key, keySize, item->keySize))
 #else
         if (me->compare_fn(key, item->key))
 #endif
@@ -488,7 +488,7 @@ static SML_EHASH_T* SML_EHASH_IMPLNAME(get_p)(SML_EHASH_TNAME *me, const SML_EHA
         /* compare keys */
         SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-        if (me->compare_fn(key, item->key, keySize))
+        if (me->compare_fn(key, item->key, keySize, item->keySize))
 #else
         if (me->compare_fn(key, item->key))
 #endif
@@ -531,7 +531,7 @@ static void SML_EHASH_IMPLNAME(erase)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT 
     while (itemIdx != UINT_MAX) {
         SML_EHASH_ITEMNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-        if (me->compare_fn(key, item->key, keySize))
+        if (me->compare_fn(key, item->key, keySize, item->keySize))
 #else
         if (me->compare_fn(key, item->key))
 #endif
@@ -731,7 +731,7 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
         /* append new item */
         if (me->numEntries + 1 > me->capacityEntries) {
             /* reallocate buffer */
-            unsigned int newCap = me->numEntries * 3 / 2 + 1;
+            unsigned int newCap = me->numEntries * 3 / 2 + (me->capacityEntries == 1);
             SML_EHASH_ITEMNAME *p = (SML_EHASH_ITEMNAME *)realloc(me->itemBuf, newCap * sizeof(*me->itemBuf));
             if (!p) {
                 return NULL;
@@ -865,10 +865,10 @@ static uint32_t std_view_hash_fn(const char *c, unsigned int size)
     return (ret >> 16) ^ ret;
 }
 
-static bool std_view_compare_fn(const char *a, const char *b, unsigned int size)
+static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA, unsigned int sizeB)
 {
     /* use memcmp instead of strncmp since it should be faster */
-    return !memcmp(a, b, size);
+    return !memcmp(a, b, sizeA < sizeB ? sizeA : sizeB);
 }
 
 #endif /* SML_EHASH_LOCAL_ONCE */

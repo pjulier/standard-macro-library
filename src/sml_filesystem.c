@@ -6,7 +6,6 @@ static inline void SML_FS_Dir_init(SML_FS_Dir *dir, SML_FS_Path *path);
 static bool        SML_FS_Dir_open(SML_FS_Dir *me);
 static inline void SML_FS_Dir_close(SML_FS_Dir *me);
 static inline bool SML_FS_isSep(SML_FS_CHAR c);
-static inline void SML_FS_pathCopy(SML_FS_Path *dst, SML_FS_Path *src);
 static bool        SML_FS_fileFlags(SML_FS_Dir *dir, SML_FS_File *file);
 
 /* only for posix API */
@@ -138,12 +137,6 @@ static inline void SML_FS_Dir_close(SML_FS_Dir *me)
 
 }
 
-static inline void SML_FS_pathCopy(SML_FS_Path *dst, SML_FS_Path *src)
-{
-    SML_FS_STRNCPY(dst->buf, src->buf, SML_FS_MAX_PATH_LEN);
-    dst->len = src->len;
-}
-
 void SML_FS_pathTrim(SML_FS_Path *path)
 {
     unsigned int len = path->len;
@@ -178,6 +171,8 @@ void SML_FS_pathToParent(SML_FS_Path *path)
         return;
     }
 #endif
+
+    path->len = sepIdx + 1;
     SML_FS_pathTrim(path);
 }
 
