@@ -343,11 +343,16 @@ static bool SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT
 static bool SML_EHASH_IMPLNAME(insert)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T data)
 #endif
 {
-#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+    if (key == NULL || keySize == 0) {
+        return false;
+    }
+#endif /* SML_EHASH_KEYCLASS */
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
     if (key == NULL) {
         return false;
     }
-#endif /* SML_EHASH_ISKEYSTRING */
+#endif /* SML_EHASH_KEYCLASS */
 
     uint32_t hash, dirIdx;
     unsigned int bucketIdx;
@@ -421,7 +426,12 @@ static bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT ke
 static bool SML_EHASH_IMPLNAME(get)(SML_EHASH_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T *data)
 #endif
 {
-#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
+    if (key == NULL || keySize == 0) {
+        return false;
+    }
+#endif /* SML_EHASH_KEYCLASS */
+#if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
     if (key == NULL) {
         return false;
     }
@@ -753,6 +763,7 @@ static SML_EHASH_ITEMNAME * SML_EHASH_IMPLNAME(createItemAndInsertFirst)(SML_EHA
     /* set item data */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     item->key = SML_strviewdup(key, keySize);
+    item->keySize = keySize;
 #elif SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
     item->key = SML_strdup(key);
 #else 
@@ -867,8 +878,11 @@ static uint32_t std_view_hash_fn(const char *c, unsigned int size)
 
 static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA, unsigned int sizeB)
 {
+    /* cannot be equal if sizes are different */
+    if (sizeA != sizeB)
+        return false;
     /* use memcmp instead of strncmp since it should be faster */
-    return !memcmp(a, b, sizeA < sizeB ? sizeA : sizeB);
+    return !memcmp(a, b, sizeA);
 }
 
 #endif /* SML_EHASH_LOCAL_ONCE */
