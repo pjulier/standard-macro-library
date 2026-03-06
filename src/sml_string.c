@@ -130,7 +130,8 @@ char* SML_itoa(char *dst, unsigned int size, int val, int base)
     /* max length with val = INT_MIN and base = 2 */
     char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
 
-    if (base < 2 || base > 36) {
+    /* size has to be at least 2 to allow for one digit + null character */
+    if (base < 2 || base > 36 || size < 2) {
         return NULL;
     }
 
@@ -151,11 +152,51 @@ char* SML_itoa(char *dst, unsigned int size, int val, int base)
 
     const unsigned int l_size = &buffer[sizeof(buffer)] - p;
 
-    /* if str does not fit we only copy the end part */
+    /* if str does not fit we only copy the front part and null terminate manually */
     if (l_size > size) {
-       /* no memmove necessary since we copy to the left */
-        return memcpy(dst, &buffer[sizeof(buffer) - size], size);
+        memcpy(dst, p, size - 1);
+        dst[size - 1] = '\0';
+        return dst;
     }
-    /* no memmove necessary since we copy to the left */
     return memcpy(dst, p, l_size);
+}
+
+char* SML_itoap(char *dst, unsigned int size, int val, int base)
+{
+    static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    
+    /* max length with val = INT_MIN and base = 2 */
+    char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
+
+    /* size has to be at least 2 to allow for one digit + null character */
+    if (base < 2 || base > 36 || size < 2) {
+        return dst;
+    }
+
+    /* start from the end */
+    char* p = &buffer[sizeof(buffer) - 1];
+    *p = '\0';
+
+    const int isNeg = val < 0;
+
+    do {
+        *(--p) = digits[35 + (val % base)];
+        val /= base;
+    } while (val);
+
+    if (isNeg) {
+        *(--p) = '-';
+    }
+
+    const unsigned int l_size = &buffer[sizeof(buffer)] - p;
+
+    /* if str does not fit we only copy the front part and null terminate manually */
+    if (l_size > size) {
+        memcpy(dst, p, size - 1);
+        dst[size - 1] = '\0';
+        return dst + size - 1;
+    }
+
+    memcpy(dst, p, l_size);
+    return dst + l_size - 1;
 }

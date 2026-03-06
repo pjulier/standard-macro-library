@@ -35,6 +35,7 @@ char* SML_strdup(const char *src);
 char* SML_strviewdup(const char *src, unsigned int size);
 int   SML_strtoi(const char *str, const char **end);
 char* SML_itoa(char *dst, unsigned int size, int val, int base);
+char* SML_itoap(char *dst, unsigned int size, int val, int base);
 
 #ifdef __cplusplus
 }

@@ -99,7 +99,7 @@ static int sort_compare_fn(const void *a, const void *b, void *sort_arr)
 
 static void console_write(const char *msg, unsigned int level)
 {
-    printf("Log level: %u, Message: %s\n", level, msg);
+    printf("(Log level): %u, (Message): %s\n", level, msg);
 }
 
 int main(void)
@@ -345,7 +345,9 @@ int main(void)
 
     char stritoa[8 * sizeof(int) + 2];
     SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MIN, 10);
-    printf("stritoa: %s\n", stritoa);
+    printf("stritoa (val: INT_MIN, base: 10): %s\n", stritoa);
+    SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MAX, 16);
+    printf("stritoa (val: INT_MAX, base: 16): 0x%s\n", stritoa);
 
     /*
      * SML_Logger
@@ -364,8 +366,9 @@ int main(void)
     LOGDEBUG("This is a %s message... i = %i", "debug", i++);
     LOGTRACE("This is a %s message... i = %i", "trace", i++);
 
-    /* set back to the default write function */
+    /* set back to the default write function and set a weird log format */
     SML_Logger_setConsoleWriteFn(NULL);
+    SML_Logger_setFormat("==> %(message) <== [%(level)] -- [%(func):%(line)]");
     i = 0;
     LOGFATAL("This is a %s message... i = %i", "fatal", i++);
     LOGERROR("This is a %s message... i = %i", "error", i++);
