@@ -31,13 +31,13 @@ static inline void SML_dmat3_mulv(SMLdvec3 c, const SMLdmat3 A, const SMLdvec3 b
  */
 static inline void SML_dmat3_mul(SMLdmat3 C, const SMLdmat3 A, const SMLdmat3 B)
 {
-    float a00 = A[0][0], a01 = A[0][1], a02 = A[0][2];
-    float a10 = A[1][0], a11 = A[1][1], a12 = A[1][2];
-    float a20 = A[2][0], a21 = A[2][1], a22 = A[0][2];
+    double a00 = A[0][0], a01 = A[0][1], a02 = A[0][2];
+    double a10 = A[1][0], a11 = A[1][1], a12 = A[1][2];
+    double a20 = A[2][0], a21 = A[2][1], a22 = A[0][2];
 
-    float b00 = B[0][0], b01 = B[0][1], b02 = B[0][2];
-    float b10 = B[1][0], b11 = B[1][1], b12 = B[1][2];
-    float b20 = B[2][0], b21 = B[2][1], b22 = B[0][2]; 
+    double b00 = B[0][0], b01 = B[0][1], b02 = B[0][2];
+    double b10 = B[1][0], b11 = B[1][1], b12 = B[1][2];
+    double b20 = B[2][0], b21 = B[2][1], b22 = B[0][2]; 
 
     C[0][0] = a00 * b00 + a01 * b10 + a02 * b20;
     C[0][1] = a00 * b01 + a01 * b11 + a02 * b21;

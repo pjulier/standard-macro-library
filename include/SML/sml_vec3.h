@@ -146,9 +146,9 @@ static inline void SML_vec3_one(SMLvec3 a)
  */
 static inline void SML_vec3_abs(SMLvec3 a, const SMLvec3 b)
 {
-    a[0] = fabs(b[0]);
-    a[1] = fabs(b[1]);
-    a[2] = fabs(b[2]);
+    a[0] = fabsf(b[0]);
+    a[1] = fabsf(b[1]);
+    a[2] = fabsf(b[2]);
 }
 
 /**
