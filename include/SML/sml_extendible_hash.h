@@ -217,7 +217,7 @@ static bool SML_EHASH_IMPLNAME(initWithDepth)(SML_EHASH_TNAME *me, SML_EHASH_IMP
     me->hash_fn = hash_fn;
 #endif /* SML_EHASH_ISKEYSTRING */
 
-    /* save hash function pointer, if key is string, default (NULL) can be used */
+    /* save compare function pointer, if key is string, default (NULL) can be used */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     if (compare_fn) {
         me->compare_fn = compare_fn;
