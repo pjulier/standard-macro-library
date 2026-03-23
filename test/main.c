@@ -368,7 +368,7 @@ int main(void)
 
     /* set back to the default write function and set a weird log format */
     SML_Logger_setConsoleWriteFn(NULL);
-    SML_Logger_setFormat("==> %(message) <== [%(level)] -- [%(func):%(line)]");
+    SML_Logger_setFormat("==> %(message) <== [%(level)] -- (%(time)) (%(func):%(line))");
     i = 0;
     LOGFATAL("This is a %s message... i = %i", "fatal", i++);
     LOGERROR("This is a %s message... i = %i", "error", i++);

@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "SML/sml_math.h"
 #include "SML/sml_string.h"
@@ -17,7 +18,8 @@
     DO(message) \
     DO(level) \
     DO(func) \
-    DO(line) 
+    DO(line) \
+    DO(time)
 
 /*
  * Enumeration for logger attributes
@@ -274,6 +276,14 @@ void SML_Logger_output(SML_LogLevel level, const char *func, int line, const cha
                 }
                 case SML_LOGGER_ATTRIB_line: {
                     to = SML_itoap(to, remaining, line, 10);
+                    break;
+                }
+                case SML_LOGGER_ATTRIB_time: {
+                    /* for now the time format is hardcoded */
+                    const time_t t = time(NULL);
+                    const struct tm *const lt = localtime(&t);
+                    const size_t count = snprintf(to, remaining, "%d-%02d-%02d %02d:%02d:%02d", lt->tm_year + 1900, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec);
+                    to = to + SML_size_min(count, remaining - 1);
                     break;
                 }
             }
