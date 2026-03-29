@@ -50,10 +50,11 @@ typedef void (*SML_Logger_consoleWriteFn)(const char *msg, unsigned int level);
  */
 typedef int SML_LogLevel;
 
-bool SML_Logger_setFormat(const char *fmt);
 void SML_Logger_setConsoleWriteFn(SML_Logger_consoleWriteFn fn);
-bool SML_Logger_setLogLevelConsole(SML_LogLevel level);
-void SML_Logger_output(SML_LogLevel level, const char *func, int line, const char *msg, ...);
+bool SML_Logger_setFormat(const char *tag, const char *fmt);
+bool SML_Logger_setLogLevelConsole(const char *tag, SML_LogLevel level);
+void SML_Logger_output(const char *tag, SML_LogLevel level, const char *func, int line, const char *msg, ...);
+void SML_Logger_destroy(void);
 
 /*
  * Logging macro definitions
@@ -61,39 +62,39 @@ void SML_Logger_output(SML_LogLevel level, const char *func, int line, const cha
  * calling SML_Logger_output() directly
  */
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_FATAL
-#define LOGFATAL(message, ...) SML_Logger_output(SML_LOG_LVL_FATAL, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGFATAL(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_FATAL, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGFATAL(message, ...)
+#define LOGFATAL(tag, message, ...)
 #endif
 
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_ERROR
-#define LOGERROR(message, ...) SML_Logger_output(SML_LOG_LVL_ERROR, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGERROR(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_ERROR, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGERROR(message, ...)
+#define LOGERROR(tag, message, ...)
 #endif
 
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_WARN
-#define LOGWARN(message, ...) SML_Logger_output(SML_LOG_LVL_WARN, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGWARN(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_WARN, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGWARN(message, ...)
+#define LOGWARN(tag, message, ...)
 #endif
 
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_INFO
-#define LOGINFO(message, ...) SML_Logger_output(SML_LOG_LVL_INFO, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGINFO(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_INFO, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGINFO(message, ...)
+#define LOGINFO(tag, message, ...)
 #endif
 
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_DEBUG
-#define LOGDEBUG(message, ...) SML_Logger_output(SML_LOG_LVL_DEBUG, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGDEBUG(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_DEBUG, __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGDEBUG(message, ...)
+#define LOGDEBUG(tag, message, ...)
 #endif
 
 #if SML_LOG_SUPPORT_LEVEL <= SML_LOG_LVL_TRACE
-#define LOGTRACE(message, ...) SML_Logger_output(SML_LOG_LVL_TRACE,  __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
+#define LOGTRACE(tag, message, ...) SML_Logger_output(tag, SML_LOG_LVL_TRACE,  __SML_FUNC__, __LINE__, message, ##__VA_ARGS__)
 #else
-#define LOGTRACE(message, ...)
+#define LOGTRACE(tag, message, ...)
 #endif
 
 

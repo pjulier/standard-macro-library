@@ -352,30 +352,40 @@ int main(void)
     /*
      * SML_Logger
      */
-    int i;
+
+    /* the logging tag used in this example */
+    static const char tag[] = "sml_test";
+    
     /* set the lowest log level */
-    SML_Logger_setLogLevelConsole(SML_LOG_LVL_TRACE);
+    SML_Logger_setLogLevelConsole(tag, SML_LOG_LVL_TRACE);
 
     /* overwrite default console write function and log some stuff */
     SML_Logger_setConsoleWriteFn(console_write);
-    i = 0;
-    LOGFATAL("This is a %s message... i = %i", "fatal", i++);
-    LOGERROR("This is a %s message... i = %i", "error", i++);
-    LOGWARN ("This is a %s message... i = %i", "warn ", i++);
-    LOGINFO ("This is a %s message... i = %i", "info ", i++);
-    LOGDEBUG("This is a %s message... i = %i", "debug", i++);
-    LOGTRACE("This is a %s message... i = %i", "trace", i++);
+
+    int i = 0;
+    LOGFATAL(tag, "This is a %s message... i = %i", "fatal", i++);
+    LOGERROR(tag, "This is a %s message... i = %i", "error", i++);
+    LOGWARN (tag, "This is a %s message... i = %i", "warn ", i++);
+    LOGINFO (tag, "This is a %s message... i = %i", "info ", i++);
+    LOGDEBUG(tag, "This is a %s message... i = %i", "debug", i++);
+    LOGTRACE(tag, "This is a %s message... i = %i", "trace", i++);
 
     /* set back to the default write function and set a weird log format */
     SML_Logger_setConsoleWriteFn(NULL);
-    SML_Logger_setFormat("==> %(message) <== [%(level)] -- (%(time)) (%(func):%(line))");
+    SML_Logger_setFormat(tag, "%(time) [%(level)] [%(tag)] -> %(message) (%(func):%(line))");
     i = 0;
-    LOGFATAL("This is a %s message... i = %i", "fatal", i++);
-    LOGERROR("This is a %s message... i = %i", "error", i++);
-    LOGWARN ("This is a %s message... i = %i", "warn ", i++);
-    LOGINFO ("This is a %s message... i = %i", "info ", i++);
-    LOGDEBUG("This is a %s message... i = %i", "debug", i++);
-    LOGTRACE("This is a %s message... i = %i", "trace", i++);
+    LOGFATAL(tag, "This is a %s message... i = %i", "fatal", i++);
+    LOGERROR(tag, "This is a %s message... i = %i", "error", i++);
+    LOGWARN (tag, "This is a %s message... i = %i", "warn ", i++);
+    LOGINFO (tag, "This is a %s message... i = %i", "info ", i++);
+    LOGDEBUG(tag, "This is a %s message... i = %i", "debug", i++);
+    LOGTRACE(tag, "This is a %s message... i = %i", "trace", i++);
+
+    /* write a message with a previously unknown tag using the default configuration */
+    LOGWARN("sml_test2", "This is a message with another tag");
+
+    /* usually not necessary, but can be added right before program terminates to satisfy tools like memcheck */
+    SML_Logger_destroy();
 
     /*
      * SML math
