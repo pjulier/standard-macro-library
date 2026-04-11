@@ -435,6 +435,7 @@ int main(void)
                 _tprintf(TEXT("\t[%s] %s, ext: %s\n"), file.isDir ? TEXT("D") : TEXT("F"), file.name, file.extension);
             }
         }
+        SML_FS_closeDir(&dir);
     }
 #else
     /* get the current working directory */
@@ -451,6 +452,7 @@ int main(void)
                 printf("\t[%s] %s, ext: %s\n", file.isDir ? "D" : "F", file.name, file.extension);
             }
         }
+        SML_FS_closeDir(&dir);
     }
 #endif
 
