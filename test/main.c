@@ -194,8 +194,11 @@ int main(void)
     SML_EHashMap_uint_erase(&hashMap, "six");
 
     /* iterate over all items (unordered) */
-    for (SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap); !SML_EHashMap_uint_isEndIt(&hashMap, &it); SML_EHashMap_uint_nextIt(&hashMap, &it)) {
-        printf("key: %s, value: %u\n", it.item->key, it.item->data);
+    for (SML_EHashMapIter_uint it = SML_EHashMap_uint_begin(&hashMap); 
+         !SML_EHashMapIter_uint_isEnd(&it); 
+         SML_EHashMapIter_uint_next(&it))
+    {
+        printf("Iterator key: %s, value: %u\n", it.item->key, it.item->value);
     }
 
     /* get pointer to a value */
@@ -208,8 +211,8 @@ int main(void)
     printf("Size of hash map: %i\n", SML_EHashMap_uint_size(&hashMap));
 
     /* check begin and end iterator for empty map */
-    SML_EHashMapIterator_uint it = SML_EHashMap_uint_firstIt(&hashMap);
-    printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMap_uint_isEndIt(&hashMap, &it) ? "" : "NOT");
+    SML_EHashMapIter_uint it = SML_EHashMap_uint_begin(&hashMap);
+    printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMapIter_uint_isEnd(&it) ? "" : "NOT");
 
     /* free internal resources */
     SML_EHashMap_uint_destroy(&hashMap);
