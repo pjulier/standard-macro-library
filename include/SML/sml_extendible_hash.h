@@ -163,7 +163,7 @@ static inline unsigned int SML_EHASH_T_FNAME(size)(const SML_EHASH_T_TNAME *me);
 static inline bool SML_EHASH_T_FNAME(empty)(const SML_EHASH_T_TNAME *me);
 
 static SML_EHASH_ITER_TNAME SML_EHASH_T_FNAME(begin)(const SML_EHASH_T_TNAME *me);
-static void SML_EHASH_ITER_FNAME(incr)(SML_EHASH_ITER_TNAME *me);
+static void SML_EHASH_ITER_FNAME(next)(SML_EHASH_ITER_TNAME *me);
 static bool SML_EHASH_ITER_FNAME(isEnd)(const SML_EHASH_ITER_TNAME *me);
 
 static uint32_t std_hash_fn(const char *c);
