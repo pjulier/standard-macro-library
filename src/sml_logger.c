@@ -159,7 +159,7 @@ static void sml_Logger_init(SML_Logger *logger)
 
 static uint8_t sml_Logger_AttribName2Enum(const char *name)
 {
-#define DO(attrib_, ...) if (!strcmp(name, #attrib_)) return SML_LOGGER_ATTRIB_ ## attrib_;
+#define DO(attrib_) if (!strcmp(name, #attrib_)) return SML_LOGGER_ATTRIB_ ## attrib_;
     FOR_LIST_OF_ATTRIBS(DO)
 #undef DO
     return SML_LOGGER_ATTRIB_MAX_COUNT;

@@ -339,11 +339,11 @@ int main(void)
     free(str_dup);
 
     char strbin32[33];
-    SML_uint32tobin(UINT32_MAX - 1, strbin32, 32);
+    SML_u32tobin(UINT32_MAX - 1, strbin32, 32);
     printf("strbin32: %s\n", strbin32);
 
     char strbin64[65];
-    SML_uint64tobin(UINT64_MAX - 1, strbin64, 64);
+    SML_u64tobin(UINT64_MAX - 1, strbin64, 64);
     printf("strbin64: %s\n", strbin64);
 
     char stritoa[8 * sizeof(int) + 2];

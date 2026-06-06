@@ -3,7 +3,7 @@
 
 #include "SML/sml_string.h"
 
-void SML_uint64tobin(uint64_t value, char *str, int places)
+void SML_u64tobin(uint64_t value, char *str, int places)
 {
     if (places > 64) {
         places = 64;
@@ -14,7 +14,7 @@ void SML_uint64tobin(uint64_t value, char *str, int places)
     *str = '\0';
 }
 
-void SML_uint32tobin(uint32_t value, char *str, int places)
+void SML_u32tobin(uint32_t value, char *str, int places)
 {
     if (places > 32) {
         places = 32;
