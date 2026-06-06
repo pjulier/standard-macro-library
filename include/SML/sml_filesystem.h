@@ -11,12 +11,13 @@
 #include <errno.h>
 #include <stdint.h>
 
+#include "SML/sml_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define SML_FS_MAX_NAME_LEN 256
-#define SML_FS_STRLEN_LITERAL(s) (sizeof(s) / sizeof(s[0]) - 1)
 
 /*
  * Windows?
@@ -58,7 +59,7 @@ extern "C" {
 #define SML_FS_STRLEN(s) _tcslen(s)
 #define SML_FS_STRCPY(dst, src) _tcscpy(dst, src)
 #define SML_FS_STRNCPY(dst, src, cnt) _tcsncpy(dst, src, cnt)
-#define SML_FS_PATH_CAT_LITERAL(path, literal) SML_FS_pathCatStrN(path, SML_FS_STR(literal), SML_FS_STRLEN_LITERAL(SML_FS_STR(literal)))
+#define SML_FS_PATH_CAT_LITERAL(path, literal) SML_FS_pathCatStrN(path, SML_FS_STR(literal), SML_STRLEN_LITERAL(SML_FS_STR(literal)))
 #define SML_FS_SEP SML_FS_STR('\\')
 #define SML_FS_SEP_ALT SML_FS_STR('/')
 
@@ -128,7 +129,7 @@ extern "C" {
 #define SML_FS_STRCPY(dst, src) strcpy(dst, src)
 #define SML_FS_STRNCPY(dst, src, cnt) strncpy(dst, src, cnt)
 
-#define SML_FS_PATH_CAT_LITERAL(path, literal) SML_FS_pathCatStrN(path, SML_FS_STR(literal), SML_FS_STRLEN_LITERAL(SML_FS_STR(literal)))
+#define SML_FS_PATH_CAT_LITERAL(path, literal) SML_FS_pathCatStrN(path, SML_FS_STR(literal), SML_STRLEN_LITERAL(SML_FS_STR(literal)))
 #define SML_FS_SEP SML_FS_STR('/')
 #define SML_FS_SEP_ALT SML_FS_STR('\\')
 

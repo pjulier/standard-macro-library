@@ -33,7 +33,7 @@ size_t SML_strscpy(char *dst, const char *src, size_t dstSize);
 
 char* SML_strdup(const char *src);
 char* SML_strviewdup(const char *src, unsigned int size);
-int   SML_strtoi(const char *str, const char **end);
+SMLReturn SML_charstoi64(const char *src, const char **end, unsigned int base, int64_t *value_out);
 char* SML_itoa(char *dst, unsigned int size, int val, int base);
 char* SML_itoap(char *dst, unsigned int size, int val, int base);
 

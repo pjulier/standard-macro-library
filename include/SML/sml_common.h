@@ -11,4 +11,17 @@
 #define SML_ZEROA(x) (memset(x, 0, sizeof(x)))
 #define SML_ZEROP(x) (memset(x, 0, sizeof(*x)))
 
+#define SML_STRLEN_LITERAL(s) (sizeof(s) / sizeof(s[0]) - 1)
+
+/*
+ * Common types
+ */
+typedef int SMLReturn;
+typedef enum SMLReturnEnum {
+    SML_RET_OK = 0,
+    SML_RET_EINVAL,
+    SML_RET_ERANGE,
+    SML_RET_ENOMEM
+} SMLReturnEnum;
+
 #endif /* INCLUDE_SML_COMMON_H */

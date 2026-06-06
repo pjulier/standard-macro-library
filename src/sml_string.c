@@ -64,63 +64,79 @@ char* SML_strviewdup(const char *src, unsigned int size)
     return dst;
 }
 
-int SML_strtoi(const char *str, const char **end)
+SMLReturn SML_charstoi64(const char *src, const char **end, unsigned int base, int64_t *value_out)
 {
-    const char *begin = str;
-    int result = 0;
-    unsigned int numDigits;
-    const char *l_end;
-    int sign;
+    const char *begin = src;
+    uint64_t value = 0;
+    int isNeg = 0;
+    unsigned int state = 0;
+    unsigned int c;
+    uint64_t valuelim;
+    unsigned int clim;
+    SMLReturn ret;
 
-    /* discard leading whitespace */
-    while (*str == ' ' || *str == '\t') {++str;}
+    c = *src;
 
-    /* detect possible sign */
-    if (*str == '-') {
-        sign = -1;
-        ++str;
-    } else {
-        sign = 1;
+    /* check base input */
+    if (base < 2 || base > 36) {
+        return SML_RET_EINVAL;
+    }
+    /* skip leading whitespace */
+    while (c == ' ' || c == '\t') {
+        c = *++src;
+    }
+    /* skip possible minus sign */
+    if (c == '-') {
+        isNeg = 1;
+        c = *++src;
     }
 
-    /* set the local end ptr to the first digit */
-    l_end = str;
-
-    /* count number of digits */
-    while (*l_end > 0x2F && *l_end < 0x3A) {
-        ++l_end;
-    }
-
-    numDigits = l_end - str;
-
-    /* not a valid number? set end to original beginning and return zero */
-    if (numDigits == 0) {
-        *end = begin;
-        return 0;
-    }
-
-    /* set the output ptr to the first character after the number */
-    *end = l_end;
-
-    /* consume trailing decimal places */
-    if (**end == '.') {
-        ++*end;
-        while (**end > 0x2F && **end < 0x3A) {
-            ++*end;
+    /* determine the limits used for overflow detection */
+    valuelim = (isNeg == 0) ? INT64_MAX : -(uint64_t)INT64_MIN;
+    clim = valuelim % (uint64_t)base;
+    valuelim /= (uint64_t)base;
+    /* process chars */
+    while (1) {
+        if (c >= '0' && c <= '9') {
+            c -= '0';
+        } else if (c >= 'A' && c <= 'Z') {
+            c = c - 'A' + 10;
+        } else if (c >= 'a' && c <= 'z') {
+            c = c - 'a' + 10;
+        } else {
+            /* invalid character for any base */
+            break;
         }
+        if (c >= base) {
+            /* character too high for the current base */
+            break;
+        }
+        /* detect overflow resulting from the current character */
+        if (state == 2 || value > valuelim || (value == valuelim && c > clim)) {
+            state = 2;
+        } else {
+            state = 1;
+            value *= base;
+            value += c;
+        }
+        c = *++src;
     }
-
-    --l_end;
-    int mult = 1;
-
-    while (--numDigits) { // TODO: this can be done without numDigits
-        result += mult * (*l_end - '0');
-        --l_end;
-        mult *= 10;
-    };
-    result += mult * (*l_end - '0');
-
-    return sign * result;
+    /* assign end pointer if it was passed */
+    if (end) {
+        *end = state == 0 ? begin : src;
+    }
+    /* assign the out value and return code */
+    ret = SML_RET_OK;
+    if (state == 0) {
+        ret = SML_RET_EINVAL;
+    } else if (state == 2) {
+        ret = SML_RET_ERANGE;
+        value = isNeg == 0 ? INT64_MAX : INT64_MIN;
+    } else if (isNeg) {
+        value = -value;
+    }
+    *value_out = (int64_t)value;
+    return ret;
 }
 
 char* SML_itoa(char *dst, unsigned int size, int val, int base)

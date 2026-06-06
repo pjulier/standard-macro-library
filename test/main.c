@@ -304,20 +304,32 @@ int main(void)
     /*
      * SML_string
      */
-    char numbers[] = " -1234.0 999";
+    char numbers[] = " 999 -1234 7FFF 1000";
     const char *from = numbers;
     const char *to;
 
-    int num1 = SML_strtoi(from, &to);
-    if (from == to) {
+    int64_t num1;
+    int64_t num2;
+    int64_t num3;
+    int64_t num4;
+
+    if (SML_charstoi64(from, &to, 10, &num1) != SML_RET_OK) {
         return 1;
     }
     from = to;
-    int num2 = SML_strtoi(from, &to);
-    if (from == to) {
+    if (SML_charstoi64(from, &to, 10, &num2) != SML_RET_OK) {
         return 1;
     }
-    printf("num1: %i, num2: %i\n", num1, num2);
+    from = to;
+    if (SML_charstoi64(from, &to, 16, &num3) != SML_RET_OK) {
+        return 1;
+    }
+    from = to;
+    if (SML_charstoi64(from, &to, 2, &num4) != SML_RET_OK) {
+        return 1;
+    }
+
+    printf("num1: %i, num2: %i, num3: %i, num4: %i\n", (int)num1, (int)num2, (int)num3, (int)num4);
 
     char str_buf[64];
     char *p = str_buf;
