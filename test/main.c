@@ -12,6 +12,7 @@
 #include "SML/sml_filesystem.h"
 #include "SML/sml_mat3.h"
 #include "SML/sml_dmat3.h"
+#include "SML/sml_json.h"
 
 /*
  * A dummy type for testing
@@ -470,6 +471,17 @@ int main(void)
         SML_FS_closeDir(&dir);
     }
 #endif
+
+    /*
+     * SML_Json
+     */
+    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ] }";
+    SML_JsonNode *root;
+   
+    root = SML_Json_parse(jsonStr, SML_STRLEN_LITERAL(jsonStr));
+    printf("Parsed json:\n");
+    SML_JsonNode_print(root);
+    SML_JsonNode_free(root);
 
     return 0;
 }
