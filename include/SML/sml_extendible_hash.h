@@ -574,8 +574,6 @@ static void SML_EHASH_T_FNAME(clear)(SML_EHASH_T_TNAME *me)
 {
     /* loop through buckets and invalidate items */
     for (unsigned int i = 0; i < me->numBuckets; ++i) {
-        me->buckets[i].first = UINT_MAX;
-        me->buckets[i].bucketSize = 0;
         /* if keys are allocated, free those */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
         unsigned int itemIdx = me->buckets[i].first;
@@ -585,6 +583,8 @@ static void SML_EHASH_T_FNAME(clear)(SML_EHASH_T_TNAME *me)
             free(item->key);
         }
 #endif
+        me->buckets[i].first = UINT_MAX;
+        me->buckets[i].bucketSize = 0;
     }
     /* instead of pushing everything on the free list, only set numEntries to zero */
     me->numEntries = 0;
