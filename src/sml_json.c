@@ -1,5 +1,7 @@
 
 #include <stdlib.h>
+#include <stdarg.h>  /* for va_list */
+#include <stdio.h>   /* for vsnprintf */
 
 #include "SML/sml_common.h"
 #include "SML/sml_string.h"
@@ -305,18 +307,64 @@ void SML_JsonNode_setBool(SML_JsonNode *me, bool boolVal)
     p->value.boolVal = boolVal;
 }
 
-
-static SML_JsonNode *sml_Json_parseObject(SML_Lexer *lex);
-static SML_JsonNode *sml_Json_parseArray(SML_Lexer *lex);
-static SML_JsonNode *sml_Json_parseValue(SML_Lexer *lex);
-
-// TODO: test
-#include <stdio.h>
-
-SML_JsonNode *SML_Json_parse(const char *src, size_t len)
+void SML_JsonParseResult_init(SML_JsonParseResult *me)
 {
+    me->root = NULL;
+    me->errorStr = NULL;
+}
+
+void SML_JsonParseResult_setRoot(SML_JsonParseResult *me, SML_JsonNode *root)
+{
+    me->root = root;
+}
+
+void SML_JsonParseResult_setError(SML_JsonParseResult *me, const char *fmt, ...)
+{
+    va_list ap;
+    va_list ap2;
+    va_start(ap, fmt);
+    va_copy(ap2, ap);
+
+    /* get the required length first */
+    const int count = vsnprintf(NULL, 0, fmt, ap);
+    
+    if (count < 0) {
+        const char err[] = "Error while setting the error, invalid format";
+        me->errorStr = realloc(me->errorStr, SML_STRLEN_LITERAL(err) + 1);
+        strcpy(me->errorStr, err);
+        va_end(ap2);
+        va_end(ap);
+        return;
+    }
+
+    me->errorStr = realloc(me->errorStr, count + 1); /* +1 for null character */
+    vsnprintf(me->errorStr, count + 1, fmt, ap2);
+
+    va_end(ap2);
+    va_end(ap);
+}
+
+void SML_JsonParseResult_destroy(SML_JsonParseResult *me)
+{
+    SML_JsonNode_free(me->root);
+    free(me->errorStr);
+}
+
+
+
+static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res);
+static SMLReturn sml_Json_parseArray(SML_Lexer *lex, SML_JsonParseResult *res);
+static SMLReturn sml_Json_parseValue(SML_Lexer *lex, SML_JsonParseResult *res);
+
+SML_JsonParseResult SML_Json_parse(const char *src, size_t len)
+{
+    SMLReturn ret;
+    SML_JsonParseResult res;
+    SML_JsonParseResult_init(&res);
+
     if (!src || len == 0) {
-        return NULL;
+        SML_JsonParseResult_setError(&res, "Invalid input argument");
+        return res;
     }
 
     SML_Lexer lex;
@@ -328,39 +376,48 @@ SML_JsonNode *SML_Json_parse(const char *src, size_t len)
     // }
     // SML_Lexer_rewind(&lex);
 
-    SML_JsonNode *node;
-
     /* check if the first token is brace or bracket */
     if (SML_Lexer_peekToken(&lex, true).type == SML_TOK_LBRACKET) {
-        node = sml_Json_parseArray(&lex);
+        ret = sml_Json_parseArray(&lex, &res);
     } else {
-        node = sml_Json_parseObject(&lex);
+        ret = sml_Json_parseObject(&lex, &res);
+    }
+
+    if (ret != SML_RET_OK) {
+        return res;
     }
 
     /* next token must not be valid */
-    if (SML_TokenType_isValid(SML_Lexer_peekToken(&lex, true).type)) {
-        // TODO: error, free the tree
-        assert(false);
-        return NULL;
+    SML_Token tok;
+    tok = SML_Lexer_peekToken(&lex, true);
+    if (SML_TokenType_isValid(tok.type)) {
+        SML_JsonParseResult_setError(&res, "Extra token after successful parse: %.*s", tok.size, tok.data);
+        SML_JsonNode_free(res.root);
+        res.root = NULL;
     }
 
-    return node;
+    return res;
 }
 
-static SML_JsonNode *sml_Json_parseObject(SML_Lexer *lex)
+static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res)
 {
     SML_JsonNode *node;
+    SML_Token tok;
+    SMLReturn ret;
 
     node = SML_JsonNode_createObject();
     if (!node) {
-        return NULL;
+        SML_JsonParseResult_setError(res, "Out of memory");
+        res->root = NULL;
+        return SML_RET_ENOMEM;
     }
 
     /* consume the left brace */
-    if (SML_Lexer_nextToken(lex, true).type != SML_TOK_LBRACE) {
-        // TODO error
-        assert(false);
-        return NULL;
+    tok = SML_Lexer_nextToken(lex, true);
+    if (tok.type != SML_TOK_LBRACE) {
+        SML_JsonParseResult_setError(res, "Expected opening brace in object definition but got '%.*s'", tok.size, tok.data);
+        res->root = NULL;
+        return SML_RET_EINVAL;
     }
 
     // TODO: handle empty case
@@ -371,111 +428,104 @@ static SML_JsonNode *sml_Json_parseObject(SML_Lexer *lex)
         SML_Token name;
         name = SML_Lexer_nextToken(lex, true);
         if (name.type != SML_TOK_STRLIT_DQUOTE) {
-            // TODO error
-            assert(false);
-            break;
+            SML_JsonParseResult_setError(res, "Expected key name in object definition but got '%.*s'. Forgotten opening bracket for array definition?", name.size, name.data);
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
 
         /* consume colon */
-        if (SML_Lexer_nextToken(lex, true).type != SML_TOK_COLON) {
-            // TODO error
-            assert(false);
-            break;
+        tok = SML_Lexer_nextToken(lex, true);
+        if (tok.type != SML_TOK_COLON) {
+            SML_JsonParseResult_setError(res, "Expected colon after key name in object definition but got '%.*s'", tok.size, tok.data);
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
-
-        SML_JsonNode *child;
 
         if (SML_Lexer_peekToken(lex, true).type == SML_TOK_LBRACKET) {
             /* found an array */
-            child = sml_Json_parseArray(lex);
-            if (!child) {
-                // TODO error
-                assert(false);
-                break;
+            ret = sml_Json_parseArray(lex, res);
+            if (ret != SML_RET_OK) {
+                return ret;
             }
         } else if (SML_Lexer_peekToken(lex, true).type == SML_TOK_LBRACE) {
             /* found an object */
-            child = sml_Json_parseObject(lex);
-            if (!child) {
-                // TODO error
-                assert(false);
-                break;
+            ret = sml_Json_parseObject(lex, res);
+            if (ret != SML_RET_OK) {
+                return ret;
             }
         } else {
             /* must be a value */
-            child = sml_Json_parseValue(lex);
-            if (!child) {
-                // TODO error
-                assert(false);
-                break;
+            ret = sml_Json_parseValue(lex, res);
+            if (ret != SML_RET_OK) {
+                return ret;
             }
         }
 
         /* add the child to the children */
-        SML_JsonNodeObject_insert(node, name.data, name.size, child);
+        SML_JsonNodeObject_insert(node, name.data, name.size, res->root);
 
         /* check for exit condition */
-        if (SML_Lexer_peekToken(lex, true).type != SML_TOK_COMMA) {
-            if (SML_Lexer_peekToken(lex, true).type == SML_TOK_RBRACE) {
+        tok = SML_Lexer_peekToken(lex, true);
+        if (tok.type != SML_TOK_COMMA) {
+            if (tok.type == SML_TOK_RBRACE) {
                 /* valid exit, consume the right brace */
                 SML_Lexer_nextToken(lex, true);
                 break;
             } else {
-                // TODO: error
-                assert(false);
-                break;
+                SML_JsonParseResult_setError(res, "Expected closing brace in object definition but got '%.*s'. Forgotten comma?", tok.size, tok.data);
+                res->root = NULL;
+                return SML_RET_EINVAL;
             }
         }
 
         /* consume the comma */
         SML_Lexer_nextToken(lex, true);
     }
-    return node;
+    res->root = node;
+    return SML_RET_OK;
 }
 
-static SML_JsonNode *sml_Json_parseArray(SML_Lexer *lex)
+static SMLReturn sml_Json_parseArray(SML_Lexer *lex, SML_JsonParseResult *res)
 {
+    SML_Token tok;
     SML_JsonNode *node;
+    SMLReturn ret;
     
     node = SML_JsonNode_createArray();
     if (!node) {
-        return NULL;
+        SML_JsonParseResult_setError(res, "Out of memory");
+        res->root = NULL;
+        return SML_RET_ENOMEM;
     }
 
     /* consume left bracket */
-    if (SML_Lexer_nextToken(lex, true).type != SML_TOK_LBRACKET) {
-        // TODO: error
-        assert(false);
-        return NULL;
+    tok = SML_Lexer_nextToken(lex, true);
+    if (tok.type != SML_TOK_LBRACKET) {
+        SML_JsonParseResult_setError(res, "Expected opening bracket in array definition but got: '%.*s'", tok.size, tok.data);
+        res->root = NULL;
+        return SML_RET_ENOMEM;
     }
 
     // TODO: handle empty case
 
     while (true) {
-        SML_JsonNode *child;
-        SML_Token tok;
-        tok = SML_Lexer_peekToken(lex, true);
-        
+        tok = SML_Lexer_peekToken(lex, true);        
         if (tok.type == SML_TOK_LBRACE) {
             /* is an object */
-            child = sml_Json_parseObject(lex);
-            if (!child) {
-                // TODO: error
-                assert(false);
-                break;
+            ret = sml_Json_parseObject(lex, res);
+            if (ret != SML_RET_OK) {
+                return ret;
             }
         } else {
             /* must be a value */
-            child = sml_Json_parseValue(lex);
-            if (!child) {
-                // TODO error
-                assert(false);
-                break;
+            ret = sml_Json_parseValue(lex, res);
+            if (ret != SML_RET_OK) {
+                return ret;
             }
         }
 
         /* add the child to the children */
-        SML_JsonNodeArray_append(node, child);
+        SML_JsonNodeArray_append(node, res->root);
 
         /* check for exit condition */
         if (SML_Lexer_peekToken(lex, true).type != SML_TOK_COMMA) {
@@ -484,29 +534,28 @@ static SML_JsonNode *sml_Json_parseArray(SML_Lexer *lex)
                 SML_Lexer_nextToken(lex, true);
                 break;
             } else {
-                // TODO: error
-                assert(false);
-                break;
+                SML_JsonParseResult_setError(res, "Expected closing bracket in array definition but got '%.*s'. Forgotten comma?", tok.size, tok.data);
+                res->root = NULL;
+                return SML_RET_EINVAL;
             }
         }
 
         /* consume the comma */
         SML_Lexer_nextToken(lex, true);
     }
-    return node;
+    res->root = node;
+    return SML_RET_OK;
 }
 
-static SML_JsonNode *sml_Json_parseValue(SML_Lexer *lex)
+static SMLReturn sml_Json_parseValue(SML_Lexer *lex, SML_JsonParseResult *res)
 {
-    SML_JsonNode *node;
     SML_Token tok;
 
     tok = SML_Lexer_nextToken(lex, true);
 
     if (!SML_TokenType_isValid(tok.type)) {
-        // TODO error, e.g. end
-        assert(false);
-        return NULL;
+        SML_JsonParseResult_setError(res, "Invalid token: '%.*s'", tok.size, tok.data);
+        return SML_RET_EINVAL;
     }
 
     /*
@@ -519,9 +568,9 @@ static SML_JsonNode *sml_Json_parseValue(SML_Lexer *lex)
         SML_Token peek;
         peek = SML_Lexer_peekToken(lex, false);
         if (peek.type != SML_TOK_INTEGER && peek.type != SML_TOK_REAL) {
-            // TODO: error
-            assert(false);
-            return NULL;
+            SML_JsonParseResult_setError(res, "Value after minus sign must be numeric but is: '%.*s'", tok.size, tok.data);
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
         SML_Lexer_nextToken(lex, false);
         tok.type = peek.type;
@@ -531,45 +580,49 @@ static SML_JsonNode *sml_Json_parseValue(SML_Lexer *lex)
 
     if (tok.type == SML_TOK_STRLIT_DQUOTE) {
         /* is string literal */
-        node = SML_JsonNode_createStringFromView(tok.data, tok.size);
+        res->root = SML_JsonNode_createStringFromView(tok.data, tok.size); // TODO: check for null??
     } else if (tok.type == SML_TOK_IDENT) {
         /* is boolean */
         if (!strncmp(tok.data, "true", tok.size)) {
-            node = SML_JsonNode_createBool(true);
+            res->root = SML_JsonNode_createBool(true);
         } else if (!strncmp(tok.data, "false", tok.size)) {
-            node = SML_JsonNode_createBool(false);
+            res->root = SML_JsonNode_createBool(false);
         } else {
-            // TODO error
-            assert(false);
-            node = NULL;
+            SML_JsonParseResult_setError(res, "Unquoted value must evaluate to true or false but is: '%.*s'", tok.size, tok.data);
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
-        node = SML_JsonNode_createBool(true);
     } else if (tok.type == SML_TOK_INTEGER) {
         /* is integer */
         int64_t value;
-        if (SML_charstoi64(tok.data, NULL, 10, &value) != SML_RET_OK) {
-            // TODO error parsing int
-            assert(false);
-            return NULL;
+        SMLReturn ret = SML_charstoi64(tok.data, NULL, 10, &value);
+        if (ret != SML_RET_OK) {
+            if (ret == SML_RET_ERANGE) {
+                SML_JsonParseResult_setError(res, "Integer value '%.*s' is too large to store in an int64_t", tok.size, tok.data);
+            } else {
+                SML_JsonParseResult_setError(res, "Error parsing integer value: '%.*s'", tok.size, tok.data);
+            }
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
-        node = SML_JsonNode_createInt(value);
+        res->root = SML_JsonNode_createInt(value);
     } else if (tok.type == SML_TOK_REAL) {
         /* is real number */
         double value;
         char *end;
         value = strtod(tok.data, &end);
         if (tok.data == end) {
-            // TODO error parsing double
-            assert(false);
-            return NULL;
+            SML_JsonParseResult_setError(res, "Error parsing real value: '%.*s'", tok.size, tok.data);
+            res->root = NULL;
+            return SML_RET_EINVAL;
         }
-        node = SML_JsonNode_createDouble(value);
+        res->root = SML_JsonNode_createDouble(value);
     } else {
-        // TODO: error, invalid token
-        assert(false);
-        node = NULL;
+        SML_JsonParseResult_setError(res, "Expected json value but got: '%.*s'", tok.size, tok.data);
+        res->root = NULL;
+        return SML_RET_EINVAL;
     }
-    return node;
+    return SML_RET_OK;
 }
 
 static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level);

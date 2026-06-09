@@ -21,7 +21,7 @@ SML_Token SML_Lexer_peekToken(SML_Lexer *me, bool skipInvisible)
     /* already scanned? */
     if (me->nextTok.type != SML_TOK_UNSCANNED) {
         return me->nextTok;
-    }
+    } 
 
     const char *c = me->cursor;
 

@@ -75,6 +75,11 @@ typedef struct SML_JsonNodeValue {
     SML_JsonValue value;
 } SML_JsonNodeValue;
 
+typedef struct SML_JsonParseResult {
+    SML_JsonNode *root;
+    char *errorStr;
+} SML_JsonParseResult;
+
 /**
  * @brief Iterator for SML_JsonNodeObject
  * 
@@ -119,6 +124,10 @@ void          SML_JsonNodeValue_setBool(SML_JsonNode *me, bool boolVal);
 
 const char   *SML_JsonNodeType_toString(SML_JsonNodeType type);
 
-SML_JsonNode *SML_Json_parse(const char *src, size_t len);
+void          SML_JsonParseResult_init(SML_JsonParseResult *me);
+void          SML_JsonParseResult_setError(SML_JsonParseResult *me, const char *fmt, ...);
+void          SML_JsonParseResult_destroy(SML_JsonParseResult *me);
+
+SML_JsonParseResult SML_Json_parse(const char *src, size_t len);
 
 #endif /* INCLUDE_SML_JSON_H */

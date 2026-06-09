@@ -67,15 +67,15 @@ typedef struct SML_Token {
 } SML_Token;
 
 typedef struct SML_Lexer {
-    const char *begin;
-    const char *end;
-    const char *cursor;
-    SML_Token nextTok;
+    const char *begin;        /**< points to beginning of the input string */
+    const char *end;          /**< points to first character after the string */
+    const char *cursor;       /**< points to beginning of the next token to be analyzed, could be one after current */
+    SML_Token nextTok;        /**< cached next token */
 } SML_Lexer;
 
-void      SML_Lexer_init(SML_Lexer *me, const char *begin, const char *end);
-void      SML_Lexer_rewind(SML_Lexer *me);
-SML_Token SML_Lexer_nextToken(SML_Lexer *me, bool skipInvisible);
-SML_Token SML_Lexer_peekToken(SML_Lexer *me, bool skipInvisible);
+void        SML_Lexer_init(SML_Lexer *me, const char *begin, const char *end);
+void        SML_Lexer_rewind(SML_Lexer *me);
+SML_Token   SML_Lexer_nextToken(SML_Lexer *me, bool skipInvisible);
+SML_Token   SML_Lexer_peekToken(SML_Lexer *me, bool skipInvisible);
 
 #endif /* INCLUDE_SML_LEXER_H */

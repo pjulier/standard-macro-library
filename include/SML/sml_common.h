@@ -10,8 +10,12 @@
 #define SML_ZERO(x)  (memset(&(x), 0, sizeof(x)))
 #define SML_ZEROA(x) (memset(x, 0, sizeof(x)))
 #define SML_ZEROP(x) (memset(x, 0, sizeof(*x)))
-
 #define SML_STRLEN_LITERAL(s) (sizeof(s) / sizeof(s[0]) - 1)
+
+/*
+ * SML logger tag
+ */
+#define SML_LOGTAG "SML"
 
 /*
  * Common types
