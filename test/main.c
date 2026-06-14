@@ -475,10 +475,10 @@ int main(void)
     /*
      * SML_Json
      */
-    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ] }";
     SML_JsonParseResult res;
-   
+    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234567} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ] }";
     res = SML_Json_parse(jsonStr, SML_STRLEN_LITERAL(jsonStr));
+
     if (res.root) {
         printf("Parsed json:\n");
         SML_JsonNode_print(res.root);

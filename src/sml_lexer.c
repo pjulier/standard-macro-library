@@ -2,6 +2,15 @@
 #include "SML/sml_lexer.h"
 
 
+#define SML_MAKE_TOK(tokenType_) \
+    me->nextTok.type = tokenType_; \
+    me->nextTok.data = me->cursor; \
+    me->nextTok.size = c - me->cursor; \
+    me->cursor = c;
+
+static inline bool sml_Lexer_incrIsEnd(const SML_Lexer *me, const char **c);
+
+
 void SML_Lexer_init(SML_Lexer *me, const char *begin, const char *end)
 {
     me->begin = begin;
@@ -36,71 +45,101 @@ SML_Token SML_Lexer_peekToken(SML_Lexer *me, bool skipInvisible)
     /* if requested, ignore newlines and whitespace */
     if (skipInvisible) {
         while (SML_ParsUtil_isLineEnd(*c) || SML_ParsUtil_isSpace(*c)) {
-            ++c; 
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                me->nextTok.data = c;
+                me->nextTok.size = 1;
+                me->nextTok.type = SML_TOK_END;
+                return me->nextTok;
+            }
         }
         me->cursor = c;
-    }
-
-    /* reached the end? */
-    if (c == me->end) {
-        me->nextTok.data = me->cursor;
-        me->nextTok.size = 1;
-        me->nextTok.type = SML_TOK_END;
-        return me->nextTok;
     }
 
     /* if requested, scan invisible tokens */
     if (!skipInvisible) {
         if (SML_ParsUtil_isSpace(*c)) {
-            ++c;
-            while (SML_ParsUtil_isSpace(*c)) {
-                ++c;
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                SML_MAKE_TOK(SML_TOK_WHITESPACE)
+                return me->nextTok;
             }
-            me->nextTok.type = SML_TOK_WHITESPACE;
-            me->nextTok.data = me->cursor;
-            me->nextTok.size = c - me->cursor;
-            me->cursor = c;
+            while (SML_ParsUtil_isSpace(*c)) {
+                if (sml_Lexer_incrIsEnd(me, &c)) {
+                    SML_MAKE_TOK(SML_TOK_WHITESPACE)
+                    return me->nextTok;
+                }
+            }
+            SML_MAKE_TOK(SML_TOK_WHITESPACE)
             return me->nextTok;
-        }
-        // TODO: newline tokens
+        } // TODO: add newline/line end
     }
 
     if (SML_ParsUtil_isLower(*c) || SML_ParsUtil_isUpper(*c) || *c == '_') {
-        ++c;
-        while (SML_ParsUtil_isLower(*c) || SML_ParsUtil_isUpper(*c) || SML_ParsUtil_isDigit(*c) || *c == '_') { 
-            ++c;
+        if (sml_Lexer_incrIsEnd(me, &c)) {
+            SML_MAKE_TOK(SML_TOK_IDENT)
+            return me->nextTok;
         }
-        me->nextTok.type = SML_TOK_IDENT;
-        me->nextTok.data = me->cursor;
-        me->nextTok.size = c - me->cursor;
-        me->cursor = c;
+        while (SML_ParsUtil_isLower(*c) || SML_ParsUtil_isUpper(*c) || SML_ParsUtil_isDigit(*c) || *c == '_') {
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                SML_MAKE_TOK(SML_TOK_IDENT)
+                return me->nextTok;
+            }
+        }
+        SML_MAKE_TOK(SML_TOK_IDENT)
     }
-    else if (SML_ParsUtil_isDigit(*c) || (*c == '.' && SML_ParsUtil_isDigit(*(c+1)))) { // TODO: second check is ugly as hell
+    else if (SML_ParsUtil_isDigit(*c) || (*c == '.' && c + 1 != me->end && SML_ParsUtil_isDigit(*(c+1)))) {
+        /* end is already checked */
         ++c;
         /* assume an integer first */
         me->nextTok.type = SML_TOK_INTEGER;
-        while (SML_ParsUtil_isDigit(*c)) { 
-            ++c;
+        while (SML_ParsUtil_isDigit(*c)) {
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                SML_MAKE_TOK(SML_TOK_INTEGER)
+                return me->nextTok;
+            }
         }
         /* optional decimal point and digits */
         if (*c == '.') {
-            ++c;
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                SML_MAKE_TOK(SML_TOK_REAL)
+                return me->nextTok;
+            }
             while (SML_ParsUtil_isDigit(*c)) { 
-                ++c;
+                if (sml_Lexer_incrIsEnd(me, &c)) {
+                    SML_MAKE_TOK(SML_TOK_REAL)
+                    return me->nextTok;
+                }
             }
             me->nextTok.type = SML_TOK_REAL;
         }
         /* save the beginning of a possible exponent */
         const char *exponent = c;
         if (*c == 'e' || *c == 'E') {
-            ++c;
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                me->nextTok.type = SML_TOK_INTEGER;
+                me->nextTok.data = me->cursor;
+                me->nextTok.size = exponent - me->cursor;
+                me->cursor = exponent;
+                return me->nextTok;
+            }
             if (*c == '-' || *c == '+') {
-                ++c;
+                if (sml_Lexer_incrIsEnd(me, &c)) {
+                    me->nextTok.type = SML_TOK_INTEGER;
+                    me->nextTok.data = me->cursor;
+                    me->nextTok.size = exponent - me->cursor;
+                    me->cursor = exponent;
+                    return me->nextTok;
+                }
             }
             if (SML_ParsUtil_isDigit(*c)) {
-                ++c;
+                if (sml_Lexer_incrIsEnd(me, &c)) {
+                    SML_MAKE_TOK(SML_TOK_REAL)
+                    return me->nextTok;
+                }
                 while (SML_ParsUtil_isDigit(*c)) {
-                    ++c;
+                    if (sml_Lexer_incrIsEnd(me, &c)) {
+                        SML_MAKE_TOK(SML_TOK_REAL)
+                        return me->nextTok;
+                    }
                 }
                 me->nextTok.type = SML_TOK_REAL;
             } else {
@@ -182,16 +221,15 @@ SML_Token SML_Lexer_peekToken(SML_Lexer *me, bool skipInvisible)
         me->cursor = c;
     } 
     else if (*c == '"') {
-        ++c;
+        if (sml_Lexer_incrIsEnd(me, &c)) {
+            SML_MAKE_TOK(SML_TOK_UNKNOWN)
+            return me->nextTok;
+        }
         while (*c != '"') { // TODO: add escape sequence!!
-            if (c == me->end) {
-                me->nextTok.type = SML_TOK_UNKNOWN;
-                me->nextTok.data = me->cursor;
-                me->nextTok.size = c - me->cursor;
-                me->cursor = c;
+            if (sml_Lexer_incrIsEnd(me, &c)) {
+                SML_MAKE_TOK(SML_TOK_UNKNOWN)
                 return me->nextTok;
             }
-            ++c;
         }
         /* consume the trailing quotes */
         ++c;
@@ -249,4 +287,10 @@ SML_Token SML_Lexer_nextToken(SML_Lexer *me, bool skipInvisible)
     }
     me->nextTok.type = SML_TOK_UNSCANNED; 
     return tok;
+}
+
+
+static inline bool sml_Lexer_incrIsEnd(const SML_Lexer *me, const char **c)
+{
+    return ++(*c) >= me->end;
 }
