@@ -104,6 +104,18 @@ SML_JsonNode *SML_JsonNode_createBool(bool boolVal)
     return (SML_JsonNode *)p;
 }
 
+SML_JsonNode *SML_JsonNode_createNull(void)
+{
+    SML_JsonNodeValue *p = (SML_JsonNodeValue *)malloc(sizeof(*p));
+    if (!p) {
+        return NULL;
+    }
+    p->super.type = SML_JSON_NODE_NULL;
+    /* value is not used for null type but still set to zero */
+    p->value.intVal = 0;
+    return (SML_JsonNode *)p;
+}
+
 void SML_JsonNode_free(SML_JsonNode *me)
 {
     if (!me || me->type == SML_JSON_NODE_INVALID) {
@@ -280,29 +292,55 @@ const char *SML_JsonNodeValue_getString(SML_JsonNode *me)
 
 double SML_JsonNodeValue_getDouble(SML_JsonNode *me)
 {
-    if (me->type != SML_JSON_NODE_DOUBLE) {
+    if (me->type == SML_JSON_NODE_DOUBLE) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.doubleVal;
+    } else if (me->type == SML_JSON_NODE_INT) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return (double)p->value.intVal;
+    } else if (me->type == SML_JSON_NODE_BOOL) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.boolVal ? 1.0 : 0.0;
+    } else {
         return 0.0;
     }
-    SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
-    return p->value.doubleVal;
 }
 
 int64_t SML_JsonNodeValue_getInt(SML_JsonNode *me)
 {
-    if (me->type != SML_JSON_NODE_INT) {
+    if (me->type == SML_JSON_NODE_INT) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.intVal;
+    } else if (me->type == SML_JSON_NODE_DOUBLE) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        const double doubleVal = p->value.doubleVal;
+        if (doubleVal < 0.0) {
+            return (int64_t)(doubleVal - 0.5);
+        } else {
+            return (int64_t)(doubleVal + 0.5);
+        }
+    } else if (me->type == SML_JSON_NODE_BOOL) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return !!p->value.boolVal;
+    } else {
         return 0;
     }
-    SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
-    return p->value.intVal;
 }
 
 bool SML_JsonNodeValue_getBool(SML_JsonNode *me)
 {
-    if (me->type != SML_JSON_NODE_BOOL) {
+    if (me->type == SML_JSON_NODE_BOOL) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.boolVal;
+    } else if (me-> type == SML_JSON_NODE_INT) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.intVal == 0 ? false : true;
+    } else if (me-> type == SML_JSON_NODE_DOUBLE) {
+        SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
+        return p->value.doubleVal == 0.0 ? false : true;
+    } else {
         return false;
     }
-    SML_JsonNodeValue *const p = (SML_JsonNodeValue *)me;
-    return p->value.boolVal;
 }
 
 void SML_JsonNode_setBool(SML_JsonNode *me, bool boolVal)
@@ -429,8 +467,12 @@ static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res)
         goto failed;
     }
 
-    // TODO: handle empty case
-    assert(SML_Lexer_peekToken(lex, true).type == SML_TOK_STRLIT_DQUOTE);
+    /* empty object? */
+    if (SML_Lexer_peekToken(lex, true).type == SML_TOK_RBRACE) {
+        SML_Lexer_nextToken(lex, true);
+        res->root = node;
+        return SML_RET_OK;
+    }
 
     while (true) {
         /* read the name */
@@ -517,7 +559,12 @@ static SMLReturn sml_Json_parseArray(SML_Lexer *lex, SML_JsonParseResult *res)
         goto failed;
     }
 
-    // TODO: handle empty case
+    /* empty array? */
+    if (SML_Lexer_peekToken(lex, true).type == SML_TOK_RBRACKET) {
+        SML_Lexer_nextToken(lex, true);
+        res->root = node;
+        return SML_RET_OK;
+    }
 
     while (true) {
         tok = SML_Lexer_peekToken(lex, true);        
@@ -594,17 +641,17 @@ static SMLReturn sml_Json_parseValue(SML_Lexer *lex, SML_JsonParseResult *res)
         tok.size += minusTok.size;
     }
 
-    // TODO: handle json null
-
     if (tok.type == SML_TOK_STRLIT_DQUOTE) {
         /* is string literal */
         node = SML_JsonNode_createStringFromView(tok.data, tok.size);
     } else if (tok.type == SML_TOK_IDENT) {
-        /* is boolean */
+        /* is boolean or null */
         if (!strncmp(tok.data, "true", tok.size)) {
             node = SML_JsonNode_createBool(true);
         } else if (!strncmp(tok.data, "false", tok.size)) {
             node = SML_JsonNode_createBool(false);
+        } else if (!strncmp(tok.data, "null", tok.size)) {
+            node = SML_JsonNode_createNull();
         } else {
             SML_JsonParseResult_setError(res, "Expected true or false for unquoted value but got: '%.*s'", tok.size, tok.data);
             ret = SML_RET_EINVAL;
@@ -702,6 +749,10 @@ static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level)
                     printf("%s", SML_JsonNodeValue_getBool(child) ? "true" : "false");
                     break;
                 }
+                case SML_JSON_NODE_NULL: {
+                    printf("null");
+                    break;
+                }
             }
             if (iiChild++ < childCount - 1) {
                 printf(",");
@@ -749,6 +800,10 @@ static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level)
                 case SML_JSON_NODE_BOOL: {
                     sml_Json_printIndent(level);
                     printf("%s", SML_JsonNodeValue_getBool(child) ? "true" : "false");
+                    break;
+                }
+                case SML_JSON_NODE_NULL: {
+                    printf("null");
                     break;
                 }
             }

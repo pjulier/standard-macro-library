@@ -46,7 +46,8 @@ typedef enum SML_JsonNodeTypeEnum {
     SML_JSON_NODE_STRING,
     SML_JSON_NODE_DOUBLE,
     SML_JSON_NODE_INT,
-    SML_JSON_NODE_BOOL
+    SML_JSON_NODE_BOOL,
+    SML_JSON_NODE_NULL
 } SML_JsonNodeTypeEnum;
 
 typedef union SML_JsonValue {
@@ -95,6 +96,7 @@ SML_JsonNode *SML_JsonNode_createStringFromView(const char *stringVal, unsigned 
 SML_JsonNode *SML_JsonNode_createDouble(double doubleVal);
 SML_JsonNode *SML_JsonNode_createInt(int64_t intVal);
 SML_JsonNode *SML_JsonNode_createBool(bool boolVal);
+SML_JsonNode *SML_JsonNode_createNull(void);
 void          SML_JsonNode_free(SML_JsonNode *me);
 void          SML_JsonNode_print(SML_JsonNode *me);
 
