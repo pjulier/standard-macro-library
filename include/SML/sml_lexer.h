@@ -22,11 +22,13 @@
     DO(SML_TOK_STRLIT_DQUOTE) \
     DO(SML_TOK_PLUS) \
     DO(SML_TOK_MINUS) \
-    DO(SML_TOK_MULT) \
-    DO(SML_TOK_DIV)
+    DO(SML_TOK_ASTERISK) \
+    DO(SML_TOK_SOLIDUS)
 
 #define FOR_LIST_OF_INVALID_TOKEN_TYPES(DO) \
     DO(SML_TOK_UNSCANNED) \
+    DO(SML_TOK_TOOLONG) \
+    DO(SML_TOK_STRLIT_UNTERMINATED) \
     DO(SML_TOK_UNKNOWN) \
     DO(SML_TOK_END)
 
@@ -37,32 +39,12 @@ typedef enum SML_TokenType {
 #undef DO
 } SML_TokenType;
 
-static inline const char *SML_TokenType_toString(SML_TokenType type)
-{
-    switch (type) {
-#define DO(token_) case token_: return #token_;
-    FOR_LIST_OF_VALID_TOKEN_TYPES(DO)
-    FOR_LIST_OF_INVALID_TOKEN_TYPES(DO)
-#undef DO
-        default:
-            return "SML_TOK_REALLYUNKNOWN";
-    }
-}
-
-static inline bool SML_TokenType_isValid(SML_TokenType type)
-{
-    switch (type) {
-#define DO(token_) case token_: return false;
-    FOR_LIST_OF_INVALID_TOKEN_TYPES(DO)
-#undef DO
-        default:
-            return true;
-    }
-}
+const char *SML_TokenType_toString(SML_TokenType type);
+bool SML_TokenType_isValid(SML_TokenType type);
 
 typedef struct SML_Token {
     const char *data;
-    size_t size;
+    unsigned int size;
     SML_TokenType type;
 } SML_Token;
 

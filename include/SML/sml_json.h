@@ -98,6 +98,11 @@ SML_JsonNode *SML_JsonNode_createInt(int64_t intVal);
 SML_JsonNode *SML_JsonNode_createBool(bool boolVal);
 SML_JsonNode *SML_JsonNode_createNull(void);
 void          SML_JsonNode_free(SML_JsonNode *me);
+SML_JsonNodeType SML_JsonNode_getType(const SML_JsonNode *me);
+bool          SML_JsonNode_isNumeric(const SML_JsonNode *me);
+bool          SML_JsonNode_isString(const SML_JsonNode *me);
+bool          SML_JsonNode_isBoolean(const SML_JsonNode *me);
+bool          SML_JsonNode_isNull(const SML_JsonNode *me);
 void          SML_JsonNode_print(SML_JsonNode *me);
 
 unsigned int  SML_JsonNodeObject_size(SML_JsonNode *me);

@@ -8,4 +8,5 @@ target_sources(sml PRIVATE
     sml_filesystem.c
     sml_lexer.c
     sml_json.c
+    sml_utf8.c
 )

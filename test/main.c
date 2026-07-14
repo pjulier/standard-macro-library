@@ -13,6 +13,7 @@
 #include "SML/sml_mat3.h"
 #include "SML/sml_dmat3.h"
 #include "SML/sml_json.h"
+#include "SML/sml_utf8.h"
 
 /*
  * A dummy type for testing
@@ -476,7 +477,7 @@ int main(void)
      * SML_Json
      */
     SML_JsonParseResult res;
-    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234567} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ] }";
+    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234567} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ], \"escaped_quotes\": \"\\\"\", \"utf8_string\": \"hello\xF0\x9F\x98\x8E\"}";
     res = SML_Json_parse(jsonStr, SML_STRLEN_LITERAL(jsonStr));
 
     if (res.root) {
