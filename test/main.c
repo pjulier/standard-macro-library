@@ -172,7 +172,7 @@ int main(void)
     SML_EHashMap_uint_insert(&hashMap, "three", 3);
 
     /* get the current size */
-    printf("Size of hash map: %i\n", SML_EHashMap_uint_size(&hashMap));
+    printf("Size of hash map: %u\n", (unsigned int)SML_EHashMap_uint_size(&hashMap));
 
     /* get the values back */
     unsigned int one, two, three;
@@ -210,7 +210,7 @@ int main(void)
     /* clear map preserving already allocated resources */
     SML_EHashMap_uint_clear(&hashMap);
 
-    printf("Size of hash map: %i\n", SML_EHashMap_uint_size(&hashMap));
+    printf("Size of hash map: %u\n", (unsigned int)SML_EHashMap_uint_size(&hashMap));
 
     /* check begin and end iterator for empty map */
     SML_EHashMapIter_uint it = SML_EHashMap_uint_begin(&hashMap);

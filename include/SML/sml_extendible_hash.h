@@ -10,22 +10,24 @@
 #include "SML/sml_common.h"
 
 /*
- * Implement a dynamic stack of type unsigned int - SML inception :)
+ * Implement a dynamic stack of type uint32_t - SML inception :)
  */
-#ifndef SML_DStack_uint4EHashMap_IMPL
-#define SML_DStack_uint4EHashMap_IMPL
-#define SML_DSTACK_T unsigned int
-#define SML_DSTACK_ID uint4EHashMap
+#ifndef SML_DStack_u32EHashMap_IMPL
+#define SML_DStack_u32EHashMap_IMPL
+#define SML_DSTACK_T uint32_t
+#define SML_DSTACK_ID u32EHashMap
 #include "SML/sml_dyn_stack.h"
 #undef SML_DSTACK_ID
 #undef SML_DSTACK_T
-#endif /* SML_DStack_uint4EHashMap_IMPL */ 
+#endif /* SML_DStack_u32EHashMap_IMPL */ 
 
 #define SML_EHASH_INITIAL_ITEM_CAPACITY 1
-// #define SML_EHASH_INITIAL_GLOBAL_DEPTH 3
 #define SML_EHASH_INITIAL_BUCKET_DEPTH  1
-#define SML_EHASH_MAX_BUCKET_SIZE       2
-#define SML_EHASH_MAX_GLOBAL_DEPTH      (8 * sizeof(uint32_t))
+#define SML_EHASH_MAX_BUCKET_SIZE       3
+#define SML_EHASH_MAX_ITEM_COUNT        (UINT32_MAX - 1)
+
+/* -1 to not exceed 32bit item index with average of 2 items per bucket */
+#define SML_EHASH_MAX_GLOBAL_DEPTH      ((8 * sizeof(uint32_t)) - 1)
 
 #define SML_EHASH_KEYCLASS_FIXED      0
 #define SML_EHASH_KEYCLASS_CSTRING    1
@@ -85,8 +87,8 @@
 #endif
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-typedef uint32_t (*SML_EHASH_T_FNAME(hash_fn))(const SML_EHASH_KEYT key, unsigned int size);
-typedef bool (*SML_EHASH_T_FNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b, unsigned int sizeA, unsigned int sizeB);
+typedef uint32_t (*SML_EHASH_T_FNAME(hash_fn))(const SML_EHASH_KEYT key, uint32_t size);
+typedef bool (*SML_EHASH_T_FNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b, uint32_t sizeA, uint32_t sizeB);
 #else
 typedef uint32_t (*SML_EHASH_T_FNAME(hash_fn))(const SML_EHASH_KEYT key);
 typedef bool (*SML_EHASH_T_FNAME(compare_fn))(const SML_EHASH_KEYT a, const SML_EHASH_KEYT b);
@@ -102,54 +104,54 @@ extern "C" {
 
 
 typedef struct SML_EHASH_ITEM_TNAME {
-    unsigned int next;                          /**< index in itemBuf of the next item */
+    uint32_t next;                              /**< index in itemBuf of the next item */
     SML_EHASH_KEYT key;                         /**< item key */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-    unsigned int keySize;                       /**< item key size */
+    uint32_t keySize;                           /**< item key size */
 #endif
     SML_EHASH_T value;                          /**< item value */
     uint32_t hash;                              /**< item key hash */
 } SML_EHASH_ITEM_TNAME;
 
 typedef struct SML_EHASH_BUCKETENTRY_TNAME {
-    unsigned int first;                         /**< pointer to the first item in this bucket */
+    uint32_t first;                             /**< index in itemBuf of the first item in this bucket */
     uint16_t bucketSize;                        /**< number of itmes in this bucket */
     uint16_t bucketDepth;                       /**< bit depth of this bucket */
 }  SML_EHASH_BUCKETENTRY_TNAME;
 
 typedef struct SML_EHASH_T_TNAME {                           
-    SML_EHASH_T_FNAME(hash_fn) hash_fn;         /**< hash function pointer */
-    SML_EHASH_T_FNAME(compare_fn) compare_fn;   /**< compare function pointer */
-    SML_EHASH_BUCKETENTRY_TNAME *buckets;       /**< array of buckets */
-    SML_EHASH_ITEM_TNAME *itemBuf;              /**< array of items */    
-    SML_DStack_uint4EHashMap itemFreeList;      /**< free list containing free indices into itemBuf */                     
-    unsigned int *directory;                    /**< global directory, contains indices into "buckets" */
-    unsigned int globalDepth;                   /**< bit depth of "directory" */                    
-    unsigned int numEntries;                    /**< total number of items currently used */
-    unsigned int capacityEntries;               /**< total number of items currently allocated */
-    unsigned int numBuckets;                    /**< total number of buckets currently used */
-    unsigned int capacityBuckets;               /**< total number of buckets currently allocated */              
+    SML_EHASH_T_FNAME(hash_fn) hash_fn;        /**< hash function pointer */
+    SML_EHASH_T_FNAME(compare_fn) compare_fn;  /**< compare function pointer */
+    SML_EHASH_BUCKETENTRY_TNAME *buckets;      /**< array of buckets */
+    SML_EHASH_ITEM_TNAME *itemBuf;             /**< array of items */    
+    SML_DStack_u32EHashMap itemFreeList;       /**< free list containing free indices into itemBuf */                     
+    uint32_t *directory;                       /**< global directory, contains indices into "buckets" */
+    uint32_t globalDepth;                      /**< bit depth of "directory" */                    
+    uint32_t itemCount;                        /**< total number of items currently used */
+    uint32_t itemCapacity;                     /**< total number of items currently allocated */
+    uint32_t bucketCount;                      /**< total number of buckets currently used */
+    uint32_t bucketCapacity;                   /**< total number of buckets currently allocated */              
 } SML_EHASH_T_TNAME; 
 
 typedef struct SML_EHASH_ITER_TNAME {
     const SML_EHASH_T_TNAME *map;               /**< the map this iterator belongs to */
     SML_EHASH_ITEM_TNAME *item;                 /**< current item */
-    unsigned int bucketIdx;                     /**< current bucket index */
+    uint32_t bucketIdx;                         /**< current bucket index */
 } SML_EHASH_ITER_TNAME;
 
 static SML_EHASH_T_TNAME * SML_EHASH_T_FNAME(create)(SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn);
 static void          SML_EHASH_T_FNAME(free)(SML_EHASH_T_TNAME *me);
 static void          SML_EHASH_T_FNAME(destroy)(SML_EHASH_T_TNAME *me);
 static bool          SML_EHASH_T_FNAME(init)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn);
-static bool          SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn, unsigned int bucketDepth);
+static bool          SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn, uint32_t bucketDepth);
 static void          SML_EHASH_T_FNAME(clear)(SML_EHASH_T_TNAME *me);
-static bool          SML_EHASH_T_FNAME(expand)(SML_EHASH_T_TNAME *me, uint32_t hash);
+static bool          SML_EHASH_T_FNAME(expand)(SML_EHASH_T_TNAME *me, uint32_t hash, uint32_t dirIdxIn, uint32_t bucketIdxIn, uint32_t *bucketIdxOut);
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static bool          SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T value);
-static bool          SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T *value);
-static SML_EHASH_T*  SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize);
-static void          SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize);
+static bool          SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T value);
+static bool          SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T *value);
+static SML_EHASH_T*  SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize);
+static void          SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize);
 
 #else
 static bool          SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value);
@@ -159,23 +161,23 @@ static void          SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_E
 
 #endif
 
-static inline unsigned int SML_EHASH_T_FNAME(size)(const SML_EHASH_T_TNAME *me);
+static inline size_t SML_EHASH_T_FNAME(size)(const SML_EHASH_T_TNAME *me);
 static inline bool SML_EHASH_T_FNAME(empty)(const SML_EHASH_T_TNAME *me);
 
 static SML_EHASH_ITER_TNAME SML_EHASH_T_FNAME(begin)(const SML_EHASH_T_TNAME *me);
 static void SML_EHASH_ITER_FNAME(next)(SML_EHASH_ITER_TNAME *me);
 static bool SML_EHASH_ITER_FNAME(isEnd)(const SML_EHASH_ITER_TNAME *me);
 
-static uint32_t std_hash_fn(const char *c);
-static bool std_compare_fn(const char *a, const char *b);
-static uint32_t std_view_hash_fn(const char *c, unsigned int size);
-static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA, unsigned int sizeB);
+static uint32_t sml_EHashMap_stdHash(const char *c);
+static bool sml_EHashMap_stdCompare(const char *a, const char *b);
+static uint32_t sml_EHashMap_stdViewHash(const char *c, uint32_t size);
+static bool sml_EHashMap_stdViewCompare(const char *a, const char *b, uint32_t sizeA, uint32_t sizeB);
 
 // static void print_table(UintEHashMap *t);
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T value, uint32_t hash, unsigned int bucketIdx);
+static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T value, uint32_t hash, uint32_t bucketIdx);
 #else
-static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value, uint32_t hash, unsigned int bucketIdx);
+static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value, uint32_t hash, uint32_t bucketIdx);
 #endif
 
 
@@ -197,20 +199,20 @@ static bool SML_EHASH_T_FNAME(init)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(has
     return SML_EHASH_T_FNAME(initWithDepth)(me, hash_fn, compare_fn, SML_EHASH_INITIAL_BUCKET_DEPTH);
 }
 
-static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn, unsigned int bucketDepth)
+static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_FNAME(hash_fn) hash_fn, SML_EHASH_T_FNAME(compare_fn) compare_fn, uint32_t bucketDepth)
 {
     /* save hash function pointer, if key is string default can be used */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     if (hash_fn) {
         me->hash_fn = hash_fn;
     } else {
-        me->hash_fn = &std_view_hash_fn;
+        me->hash_fn = &sml_EHashMap_stdViewHash;
     }
 #elif SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
     if (hash_fn) {
         me->hash_fn = hash_fn;
     } else {
-        me->hash_fn = &std_hash_fn;
+        me->hash_fn = &sml_EHashMap_stdHash;
     }
 #else
     if (!hash_fn) {
@@ -224,13 +226,13 @@ static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_
     if (compare_fn) {
         me->compare_fn = compare_fn;
     } else {
-        me->compare_fn = &std_view_compare_fn;
+        me->compare_fn = &sml_EHashMap_stdViewCompare;
     }
 #elif SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
     if (compare_fn) {
         me->compare_fn = compare_fn;
     } else {
-        me->compare_fn = &std_compare_fn;
+        me->compare_fn = &sml_EHashMap_stdCompare;
     }
 #else
     if (!compare_fn) {
@@ -240,7 +242,7 @@ static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_
 #endif /* SML_EHASH_ISKEYSTRING */
 
     /* determine initial depth(s) */
-    unsigned int globalDepth;
+    uint32_t globalDepth;
     if (bucketDepth < 1) {
         bucketDepth = 1;
         globalDepth = bucketDepth + 1;
@@ -254,30 +256,30 @@ static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_
     }
 
     /* allocate initial directory */
-    const unsigned int numDir    = (1 << globalDepth);
-    const unsigned int numBucket = (1 << bucketDepth);
+    const uint32_t numDir    = (1U << globalDepth);
+    const uint32_t numBucket = (1U << bucketDepth);
 
-    me->directory = (unsigned int *)malloc(numDir * sizeof(*me->directory));
+    me->directory = (uint32_t *)malloc(numDir * sizeof(*me->directory));
     if (me->directory == NULL) {
         goto err1;
     }
-    for (unsigned int i = 0; i < numDir; ++i) {
+    for (uint32_t i = 0; i < numDir; ++i) {
         /* map directories to buckets */
         me->directory[i] = i & (numBucket - 1);
     }
 
     me->globalDepth = globalDepth;
-    me->numEntries = 0;
+    me->itemCount = 0;
 
     /* create array of buckets */
     me->buckets = (SML_EHASH_BUCKETENTRY_TNAME *)malloc(numBucket * sizeof(*me->buckets));
     if (me->buckets == NULL) {
         goto err2;
     }
-    me->numBuckets = numBucket;
-    me->capacityBuckets = numBucket;
-    for (unsigned int i = 0; i < numBucket; ++i) {
-        me->buckets[i].first = UINT_MAX;
+    me->bucketCount = numBucket;
+    me->bucketCapacity = numBucket;
+    for (uint32_t i = 0; i < numBucket; ++i) {
+        me->buckets[i].first = UINT32_MAX;
         me->buckets[i].bucketSize = 0;
         me->buckets[i].bucketDepth = bucketDepth;
     }
@@ -287,10 +289,10 @@ static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_
     if (!me->itemBuf) {
         goto err3;
     }
-    me->capacityEntries = SML_EHASH_INITIAL_ITEM_CAPACITY;
+    me->itemCapacity = SML_EHASH_INITIAL_ITEM_CAPACITY;
 
     /* init free list of items */
-    SML_DStack_uint4EHashMap_init(&me->itemFreeList);
+    SML_DStack_u32EHashMap_init(&me->itemFreeList);
 
     return true;
 
@@ -317,9 +319,9 @@ static void SML_EHASH_T_FNAME(destroy)(SML_EHASH_T_TNAME *me)
 {
     /* if key was allocated, go through buckets and free each item key */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-    for (unsigned int i = 0; i < me->numBuckets; ++i) {
-        unsigned int itemIdx = me->buckets[i].first;
-        while (itemIdx != UINT_MAX) {
+    for (uint32_t i = 0; i < me->bucketCount; ++i) {
+        uint32_t itemIdx = me->buckets[i].first;
+        while (itemIdx != UINT32_MAX) {
             SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
             itemIdx = item->next;
             free(item->key);
@@ -328,7 +330,7 @@ static void SML_EHASH_T_FNAME(destroy)(SML_EHASH_T_TNAME *me)
 #endif /* SML_EHASH_ISKEYSTRING*/
 
     /* free the item free list */
-    SML_DStack_uint4EHashMap_destroy(&me->itemFreeList);
+    SML_DStack_u32EHashMap_destroy(&me->itemFreeList);
     /* free the itemBuf */
     free(me->itemBuf);
     /* free the buckets array */
@@ -340,7 +342,7 @@ static void SML_EHASH_T_FNAME(destroy)(SML_EHASH_T_TNAME *me)
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T value)
+static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T value)
 #else
 static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value)
 #endif
@@ -357,21 +359,21 @@ static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEY
 #endif /* SML_EHASH_KEYCLASS */
 
     uint32_t hash, dirIdx;
-    unsigned int bucketIdx;
+    uint32_t bucketIdx;
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     hash = (*me->hash_fn)(key, keySize);
 #else
     hash = (*me->hash_fn)(key);
 #endif
-    dirIdx = hash & ((1 << me->globalDepth) - 1);
+    dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
     /* try direct inserting */
-    unsigned int itemIdx = me->buckets[bucketIdx].first;
-    unsigned int chainLevel = 0;
+    uint32_t itemIdx = me->buckets[bucketIdx].first;
+    uint32_t chainLevel = 0;
 
-    while(itemIdx != UINT_MAX) {
+    while(itemIdx != UINT32_MAX) {
         /* item already existing? -> overwrite */
         SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
@@ -402,14 +404,11 @@ static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEY
     }
 
     /* bucket is full, expand */
-    if (!SML_EHASH_T_FNAME(expand)(me, hash)) {
+    if (!SML_EHASH_T_FNAME(expand)(me, hash, dirIdx, bucketIdx, &bucketIdx)) {
         return false;
     }
 
     /* insert new item */
-    dirIdx = hash & ((1U << me->globalDepth) - 1);
-    bucketIdx = me->directory[dirIdx];
-
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     if (!SML_EHASH_T_FNAME(createItemAndInsertFirst)(me, key, keySize, value, hash, bucketIdx))
 #else
@@ -423,7 +422,7 @@ static bool SML_EHASH_T_FNAME(insert)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEY
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T *value)
+static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T *value)
 #else
 static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T *value)
 #endif
@@ -440,7 +439,7 @@ static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_
 #endif /* SML_EHASH_KEYCLASS */
 
     uint32_t hash, dirIdx;
-    unsigned int bucketIdx;
+    uint32_t bucketIdx;
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     hash = (*me->hash_fn)(key, keySize);
@@ -450,9 +449,9 @@ static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_
     dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
-    unsigned int itemIdx = me->buckets[bucketIdx].first;
+    uint32_t itemIdx = me->buckets[bucketIdx].first;
 
-    while(itemIdx != UINT_MAX) {
+    while(itemIdx != UINT32_MAX) {
         /* compare keys */
         SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
@@ -472,7 +471,7 @@ static bool SML_EHASH_T_FNAME(get)(const SML_EHASH_T_TNAME *me, const SML_EHASH_
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static SML_EHASH_T*  SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize)
+static SML_EHASH_T*  SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize)
 #else
 static SML_EHASH_T* SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key)
 #endif
@@ -484,7 +483,7 @@ static SML_EHASH_T* SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const 
 #endif /* SML_EHASH_KEYCLASS */
 
     uint32_t hash, dirIdx;
-    unsigned int bucketIdx;
+    uint32_t bucketIdx;
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     hash = (*me->hash_fn)(key, keySize);
@@ -494,9 +493,9 @@ static SML_EHASH_T* SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const 
     dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
-    unsigned int itemIdx = me->buckets[bucketIdx].first;
+    uint32_t itemIdx = me->buckets[bucketIdx].first;
 
-    while(itemIdx != UINT_MAX) {
+    while(itemIdx != UINT32_MAX) {
         /* compare keys */
         SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
@@ -515,7 +514,7 @@ static SML_EHASH_T* SML_EHASH_T_FNAME(get_p)(const SML_EHASH_T_TNAME *me, const 
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize)
+static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize)
 #else
 static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key)
 #endif
@@ -527,7 +526,7 @@ static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT
 #endif /* SML_EHASH_KEYCLASS */
 
     uint32_t hash, dirIdx;
-    unsigned int bucketIdx;
+    uint32_t bucketIdx;
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
     hash = (*me->hash_fn)(key, keySize);
@@ -537,10 +536,10 @@ static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT
     dirIdx = hash & ((1U << me->globalDepth) - 1);
     bucketIdx = me->directory[dirIdx];
 
-    unsigned int itemIdx = me->buckets[bucketIdx].first;
-    unsigned int *prevIdxPtr = &me->buckets[bucketIdx].first;
+    uint32_t itemIdx = me->buckets[bucketIdx].first;
+    uint32_t *prevIdxPtr = &me->buckets[bucketIdx].first;
 
-    while (itemIdx != UINT_MAX) {
+    while (itemIdx != UINT32_MAX) {
         SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
         if (me->compare_fn(key, item->key, keySize, item->keySize))
@@ -551,12 +550,12 @@ static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT
             /* item found, erase it */
             *prevIdxPtr = item->next;
             --me->buckets[bucketIdx].bucketSize;
-            --me->numEntries;
+            --me->itemCount;
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
             free(item->key);
 #endif
             /* push index onto free list */
-            SML_DStack_uint4EHashMap_push(&me->itemFreeList, itemIdx);
+            SML_DStack_u32EHashMap_push(&me->itemFreeList, itemIdx);
             return;
         }
         prevIdxPtr = &item->next;
@@ -573,109 +572,133 @@ static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT
 static void SML_EHASH_T_FNAME(clear)(SML_EHASH_T_TNAME *me)
 {
     /* loop through buckets and invalidate items */
-    for (unsigned int i = 0; i < me->numBuckets; ++i) {
+    for (uint32_t i = 0; i < me->bucketCount; ++i) {
         /* if keys are allocated, free those */
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
-        unsigned int itemIdx = me->buckets[i].first;
-        while (itemIdx != UINT_MAX) {
+        uint32_t itemIdx = me->buckets[i].first;
+        while (itemIdx != UINT32_MAX) {
             SML_EHASH_ITEM_TNAME *const item = &me->itemBuf[itemIdx];
             itemIdx = item->next;
             free(item->key);
         }
 #endif
-        me->buckets[i].first = UINT_MAX;
+        me->buckets[i].first = UINT32_MAX;
         me->buckets[i].bucketSize = 0;
     }
-    /* instead of pushing everything on the free list, only set numEntries to zero */
-    me->numEntries = 0;
-    SML_DStack_uint4EHashMap_clear(&me->itemFreeList);
+    /* instead of pushing everything on the free list, only set itemCount to zero */
+    me->itemCount = 0;
+    SML_DStack_u32EHashMap_clear(&me->itemFreeList);
 }
 
-static bool SML_EHASH_T_FNAME(expand)(SML_EHASH_T_TNAME *me, uint32_t hash) // TODO: return bucketIdx
+static bool SML_EHASH_T_FNAME(expand)(SML_EHASH_T_TNAME *me, uint32_t hash, uint32_t dirIdxIn, uint32_t bucketIdxIn, uint32_t *bucketIdxOut)
 {
-    /* recursively split bucket or grow directory until item with "hash" can be inserted */
-    while (me->globalDepth <= SML_EHASH_MAX_GLOBAL_DEPTH) {
-        uint32_t dirIdx = hash & ((uint64_t)(1 << me->globalDepth) - 1);
-        uint32_t bucketIdx = me->directory[dirIdx];
-
-        if (!(me->globalDepth > me->buckets[bucketIdx].bucketDepth)) {
-            /* grow the directory */
-            unsigned int *p = (unsigned int *)realloc(me->directory, (1U << (me->globalDepth + 1)) * sizeof(*me->directory));
-            if (p == NULL) {
-                return false;
+    /* starting values */
+    uint32_t dirIdx = dirIdxIn;
+    uint32_t bucketIdx = bucketIdxIn;
+    /* recursively split bucket and/or grow directory until item with "hash" can be inserted */
+    while (true) {
+        while (true) {
+            /* split the current bucket */
+            if (!(me->buckets[bucketIdx].bucketDepth < me->globalDepth)) {
+                /* before next bucket split we have to grow the global directory */
+                break;
             }
-            me->directory = p;
 
-            ++me->globalDepth;
+            const uint32_t prevBucketDepth = me->buckets[bucketIdx].bucketDepth;
 
-            /* duplicate first half of the directory to the second half */
-            for (unsigned int i = 0; i < (1U << (me->globalDepth - 1)); ++i) {
-                me->directory[i + (1U << (me->globalDepth - 1))] = me->directory[i];
+            /* increase bucket count by one, if necessary allocate larger array */
+            if (me->bucketCount + 1 > me->bucketCapacity) {
+                /* max capacity reached? */
+                if (me->bucketCapacity == UINT32_MAX) {
+                    return false;
+                }
+                uint64_t newCap = me->bucketCapacity * 3 / 2 + (me->bucketCapacity == 1);
+                /* prevent overflow */
+                if (newCap > UINT32_MAX) {
+                    newCap = UINT32_MAX;
+                }
+                SML_EHASH_BUCKETENTRY_TNAME *p = (SML_EHASH_BUCKETENTRY_TNAME *)realloc(me->buckets, newCap * sizeof(*me->buckets));
+                if (p == NULL) {
+                    return false;
+                }
+                me->buckets = p;
+                me->bucketCapacity = newCap;
             }
-        }
+            SML_EHASH_BUCKETENTRY_TNAME *const origBucket = &me->buckets[bucketIdx];
+            ++me->bucketCount;
+            ++origBucket->bucketDepth;
+            me->buckets[me->bucketCount - 1].first = UINT32_MAX;
+            me->buckets[me->bucketCount - 1].bucketSize = 0;
+            me->buckets[me->bucketCount - 1].bucketDepth = origBucket->bucketDepth;
 
-        /* split the bucket */
-        const unsigned int prevBucketDepth = me->buckets[bucketIdx].bucketDepth;
+            /* set the relevant directories to the new bucket (the ones with the "1" in the next higher bit) */
+            const uint32_t stride = 1U << (prevBucketDepth + 1);
+            const uint32_t offset = (stride >> 1) | (dirIdx & ((stride >> 1) - 1));
 
-        /* increase bucket number by one, if necessary allocate larger array */
-        if (me->numBuckets + 1 > me->capacityBuckets) {
-            unsigned int newCap = me->numBuckets * 3 / 2 + (me->capacityBuckets == 1);
-            SML_EHASH_BUCKETENTRY_TNAME *p = (SML_EHASH_BUCKETENTRY_TNAME *)realloc(me->buckets, newCap * sizeof(*me->buckets));
-            if (p == NULL) {
-                return false;
+            for (uint32_t i = offset; i < (1U << me->globalDepth); i += stride) {
+                me->directory[i] = me->bucketCount - 1;
             }
-            me->buckets = p;
-            me->capacityBuckets = newCap;
-        }
-        SML_EHASH_BUCKETENTRY_TNAME *const origBucket = &me->buckets[bucketIdx];
-        ++me->numBuckets;
-        ++origBucket->bucketDepth;
-        me->buckets[me->numBuckets - 1].first = UINT_MAX;
-        me->buckets[me->numBuckets - 1].bucketSize = 0;
-        me->buckets[me->numBuckets - 1].bucketDepth = origBucket->bucketDepth;
 
-        /* set the relevant directories to the new bucket (the ones with the "1" in the next higher bit) */
-        const uint64_t stride = 1 << (prevBucketDepth + 1);
-        const uint64_t offset = (stride >> 1) | (dirIdx & ((stride >> 1) - 1));
+            SML_EHASH_BUCKETENTRY_TNAME *const newBucket = &me->buckets[me->bucketCount - 1];
 
-        for(uint64_t i = offset; i < (uint64_t)(1 << me->globalDepth); i += stride) {
-            me->directory[i] = me->numBuckets - 1;
-        }
+            // TODO: do this with less local variables
+            uint32_t itemIdx = origBucket->first;
+            uint32_t *prevIdxPtr = &origBucket->first;
 
-        SML_EHASH_BUCKETENTRY_TNAME *const newBucket = &me->buckets[me->numBuckets - 1];
+            /* loop through bucket linked list and move items if necessary */
+            while(itemIdx != UINT32_MAX) {
+                SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
+                /* save for later */
+                uint32_t nextIdx = item->next;
 
-        // TODO: do this with less local variables
-        unsigned int itemIdx = origBucket->first;
-        unsigned int *prevIdxPtr = &origBucket->first;
-
-        while(itemIdx != UINT_MAX) {
-            SML_EHASH_ITEM_TNAME *item = &me->itemBuf[itemIdx];
-            /* save for later */
-            unsigned int nextIdx = item->next;
-
-            /* test if item needs to be moved */
-            if (item->hash & (1 << (uint64_t)(origBucket->bucketDepth - 1))) {
-                *prevIdxPtr = item->next;
-                --origBucket->bucketSize;
-                item->next = newBucket->first;
-                newBucket->first = itemIdx;
-                ++newBucket->bucketSize;
-            } else {
-                prevIdxPtr = &item->next;
+                /* test if item needs to be moved */
+                if (item->hash & (1 << ((uint32_t)origBucket->bucketDepth - 1))) {
+                    *prevIdxPtr = item->next;
+                    --origBucket->bucketSize;
+                    item->next = newBucket->first;
+                    newBucket->first = itemIdx;
+                    ++newBucket->bucketSize;
+                } else {
+                    prevIdxPtr = &item->next;
+                }
+                itemIdx = nextIdx;
             }
-            itemIdx = nextIdx;
+
+            /* bucket index could have changed due to some of the directories pointing to new bucket */
+            bucketIdx = me->directory[dirIdx];
+
+            if (me->buckets[bucketIdx].bucketSize < SML_EHASH_MAX_BUCKET_SIZE) {
+                /* success, enough room to insert item */
+                *bucketIdxOut = bucketIdx;
+                return true;
+            }
+            /* else: split bucket again */
         }
 
-        // print_table(me);
-
-        /* bucket index could have changed */
-        bucketIdx = me->directory[dirIdx];
-
-        if (me->buckets[bucketIdx].bucketSize < SML_EHASH_MAX_BUCKET_SIZE) {
-            return true;
+        /* check if the directory can be grown */
+        if (me->globalDepth >= SML_EHASH_MAX_GLOBAL_DEPTH) {
+            /* failure, directory depth is at its maximum */
+            return false;
         }
+
+        /* grow the directory */
+        uint32_t *p = (uint32_t *)realloc(me->directory, (1UL << (me->globalDepth + 1)) * sizeof(*me->directory));
+        if (!p) {
+            return false;
+        }
+        me->directory = p;
+        ++me->globalDepth;
+
+        /* duplicate first half of the directory to the second half */
+        for (uint32_t i = 0; i < (1U << (me->globalDepth - 1)); ++i) {
+            me->directory[i + (1U << (me->globalDepth - 1))] = me->directory[i];
+        }
+
+        /* directory index could have changed due to leading 1 that is now being masked */
+        dirIdx = hash & ((1U << me->globalDepth) - 1);
+        /* bucketIdx stays the same since new half of directory is a duplicate */
     }
-    /* directory depth is at its maximum */
+    /* should never be reached */
     return false;
 }
 
@@ -683,13 +706,13 @@ static SML_EHASH_ITER_TNAME SML_EHASH_T_FNAME(begin)(const SML_EHASH_T_TNAME *me
 {
     /* map is empty? -> return the end iterator */
     if (SML_EHASH_T_FNAME(empty)(me)) {
-        return (SML_EHASH_ITER_TNAME){ me, &me->itemBuf[me->numEntries], me->numBuckets };
+        return (SML_EHASH_ITER_TNAME){ me, &me->itemBuf[me->itemCount], me->bucketCount };
     }
 
     /* serach the for the first item */
-    unsigned int bucketIdx = 0;
-    for ( ; bucketIdx < me->numBuckets; ++bucketIdx) {
-        if (me->buckets[bucketIdx].first != UINT_MAX)
+    uint32_t bucketIdx = 0;
+    for ( ; bucketIdx < me->bucketCount; ++bucketIdx) {
+        if (me->buckets[bucketIdx].first != UINT32_MAX)
             break;
     }
     return (SML_EHASH_ITER_TNAME){ me, &me->itemBuf[me->buckets[bucketIdx].first], bucketIdx };
@@ -698,15 +721,15 @@ static SML_EHASH_ITER_TNAME SML_EHASH_T_FNAME(begin)(const SML_EHASH_T_TNAME *me
 static void SML_EHASH_ITER_FNAME(next)(SML_EHASH_ITER_TNAME *me)
 {
     /* try the next item in the same bucket */
-    if (me->item->next != UINT_MAX) {
+    if (me->item->next != UINT32_MAX) {
         me->item = &me->map->itemBuf[me->item->next];
         return;
     }
 
     /* move to the next bucket(s) */
-    for (unsigned int bucketIdx = ++me->bucketIdx; bucketIdx < me->map->numBuckets; ++bucketIdx) {
-        const unsigned int idx = me->map->buckets[bucketIdx].first;
-        if (idx != UINT_MAX) {
+    for (uint32_t bucketIdx = ++me->bucketIdx; bucketIdx < me->map->bucketCount; ++bucketIdx) {
+        const uint32_t idx = me->map->buckets[bucketIdx].first;
+        if (idx != UINT32_MAX) {
             me->bucketIdx = bucketIdx;
             me->item = &me->map->itemBuf[idx];
             return;
@@ -714,12 +737,12 @@ static void SML_EHASH_ITER_FNAME(next)(SML_EHASH_ITER_TNAME *me)
     }
 
     /* arrive here, no more entries */
-    me->item = &me->map->itemBuf[me->map->numEntries];
+    me->item = &me->map->itemBuf[me->map->itemCount];
 }
 
 static bool SML_EHASH_ITER_FNAME(isEnd)(const SML_EHASH_ITER_TNAME *me)
 {
-    if (me->item == &me->map->itemBuf[me->map->numEntries]) {
+    if (me->item == &me->map->itemBuf[me->map->itemCount]) {
         return true;
     } else {
         return false;
@@ -727,31 +750,39 @@ static bool SML_EHASH_ITER_FNAME(isEnd)(const SML_EHASH_ITER_TNAME *me)
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW
-static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, unsigned int keySize, SML_EHASH_T value, uint32_t hash, unsigned int bucketIdx)
+static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, uint32_t keySize, SML_EHASH_T value, uint32_t hash, uint32_t bucketIdx)
 #else
-static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value, uint32_t hash, unsigned int bucketIdx)
+static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT key, SML_EHASH_T value, uint32_t hash, uint32_t bucketIdx)
 #endif
 {
-    unsigned int idx;
+    uint32_t idx;
     bool fromFreeList;
 
-    if (SML_DStack_uint4EHashMap_empty(&me->itemFreeList)) {
+    if (SML_DStack_u32EHashMap_empty(&me->itemFreeList)) {
         /* append new item */
-        if (me->numEntries + 1 > me->capacityEntries) {
+        if (me->itemCount + 1 > me->itemCapacity) {
+            /* max capacity reached? */
+            if (me->itemCapacity == SML_EHASH_MAX_ITEM_COUNT) {
+                return false;
+            }
             /* reallocate buffer */
-            unsigned int newCap = me->numEntries * 3 / 2 + (me->capacityEntries == 1);
+            uint64_t newCap = me->itemCapacity * 3 / 2 + (me->itemCapacity == 1);
+            /* prevent overflow */
+            if (newCap > SML_EHASH_MAX_ITEM_COUNT) {
+                newCap = SML_EHASH_MAX_ITEM_COUNT;
+            }
             SML_EHASH_ITEM_TNAME *p = (SML_EHASH_ITEM_TNAME *)realloc(me->itemBuf, newCap * sizeof(*me->itemBuf));
             if (!p) {
                 return NULL;
             }
             me->itemBuf = p;
-            me->capacityEntries = newCap;
+            me->itemCapacity = newCap;
         }
-        idx = me->numEntries;
+        idx = me->itemCount;
         fromFreeList = false;
     } else {
         /* use existing free spot */
-        idx = SML_DStack_uint4EHashMap_back(&me->itemFreeList);
+        idx = SML_DStack_u32EHashMap_back(&me->itemFreeList);
         fromFreeList = true;
     }
 
@@ -772,14 +803,14 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
     item->value = value;
     item->hash = hash;
 
-    unsigned int firstIdx = me->buckets[bucketIdx].first;
+    uint32_t firstIdx = me->buckets[bucketIdx].first;
     item->next = firstIdx;
     me->buckets[bucketIdx].first = idx;
     ++me->buckets[bucketIdx].bucketSize;
-    ++me->numEntries;
+    ++me->itemCount;
 
     if (fromFreeList) {
-        SML_DStack_uint4EHashMap_pop(&me->itemFreeList);
+        SML_DStack_u32EHashMap_pop(&me->itemFreeList);
     }
 
     return item;
@@ -818,63 +849,69 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
 #if !defined(SML_EHASH_LOCAL_ONCE) && SML_EHASH_ISKEYSTRING
 #define SML_EHASH_LOCAL_ONCE
 
-/*
- * Default hash and compare functions for (char *) keys
+/**
+ * @brief Default hash function for C-string keys in SML_EHashMap
+ * 
+ * Computes the 32bit FNV-1a (Fowler/Noll/Vo) hash
+ * 
+ * @param c Input string
+ * @return uint32_t hash result
  */
-static uint32_t std_hash_fn(const char *c)
+static uint32_t sml_EHashMap_stdHash(const char *c)
 {
-    unsigned long ret = 0;
-    long n;
-    unsigned long v;
-    int r;
-
-    if ((c == NULL) || (*c == '\0'))
-        return ret;
-
-    n = 0x100;
+    uint32_t hash = 2166136261U;
     while (*c) {
-        v = n | (*c);
-        n += 0x100;
-        r = (int)((v >> 2) ^ v) & 0x0f;
-        /* cast to uint64_t to avoid 32 bit shift of 32 bit value */
-        ret = (ret << r) | (unsigned long)((uint64_t)ret >> (32 - r));
-        ret &= 0xFFFFFFFFL;
-        ret ^= v * v;
-        c++;
+        hash ^= (uint32_t)*c++;
+        hash *= 16777619U;
     }
-    return (ret >> 16) ^ ret;
+    return hash;
 }
 
-static bool std_compare_fn(const char *a, const char *b)
+/**
+ * @brief Default compare function for C-string keys in SML_EHashMap
+ * 
+ * @param a Input string a
+ * @param b Input string b
+ * @return true Strings are the same
+ * @return false Strings are not the same
+ */
+static bool sml_EHashMap_stdCompare(const char *a, const char *b)
 {
     return !strcmp(a, b);
 }
 
-static uint32_t std_view_hash_fn(const char *c, unsigned int size)
+/**
+ * @brief Default hash function for string view keys in SML_EHashMap
+ * 
+ * Computes the 32bit FNV-1a (Fowler/Noll/Vo) hash
+ * 
+ * @param c Input string pointer 
+ * @param size Input string length
+ * @return uint32_t hash result
+ */
+static uint32_t sml_EHashMap_stdViewHash(const char *c, uint32_t size)
 {
-    unsigned long ret = 0;
-    long n;
-    unsigned long v;
-    int r;
-
-    if ((c == NULL) || (*c == '\0'))
-        return ret;
-
-    n = 0x100;
-    while (size-- > 0) {
-        v = n | (*c);
-        n += 0x100;
-        r = (int)((v >> 2) ^ v) & 0x0f;
-        /* cast to uint64_t to avoid 32 bit shift of 32 bit value */
-        ret = (ret << r) | (unsigned long)((uint64_t)ret >> (32 - r));
-        ret &= 0xFFFFFFFFL;
-        ret ^= v * v;
-        c++;
+    uint8_t *cur = (uint8_t *)c;
+    uint8_t *end = (uint8_t *)c + size;
+    uint32_t hash = 2166136261U;
+    while (cur != end) {
+        hash ^= (uint32_t)*cur++;
+        hash *= 16777619U;
     }
-    return (ret >> 16) ^ ret;
+    return hash;
 }
 
-static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA, unsigned int sizeB)
+/**
+ * @brief Default compare functions for string view keys in SML_EHashMap
+ * 
+ * @param a Input string pointer a
+ * @param b Input string pointer b
+ * @param sizeA Length of string a
+ * @param sizeB Length of string b
+ * @return true Strings are the same
+ * @return false Strings are not the same
+ */
+static bool sml_EHashMap_stdViewCompare(const char *a, const char *b, uint32_t sizeA, uint32_t sizeB)
 {
     /* cannot be equal if sizes are different */
     if (sizeA != sizeB)
@@ -888,19 +925,21 @@ static bool std_view_compare_fn(const char *a, const char *b, unsigned int sizeA
 
 
 /**
- * Returns the number of entries
-*/
-static inline unsigned int SML_EHASH_T_FNAME(size)(const SML_EHASH_T_TNAME *me)
+ * @brief Return the current number of items in the hash map
+ * 
+ */
+static inline size_t SML_EHASH_T_FNAME(size)(const SML_EHASH_T_TNAME *me)
 {
-    return me->numEntries;
+    return me->itemCount;
 }
 
 /**
- * Returns true if the hash map is empty
-*/
+ * @brief Return true if the hash map is empty
+ * 
+ */
 static inline bool SML_EHASH_T_FNAME(empty)(const SML_EHASH_T_TNAME *me)
 {
-    return me->numEntries == 0;
+    return me->itemCount == 0;
 }
 
 #ifdef __cplusplus
