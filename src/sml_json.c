@@ -26,7 +26,7 @@ SML_JsonNode *SML_JsonNode_createObject(void)
     SML_JsonNodeObject *p = (SML_JsonNodeObject *)malloc(sizeof(*p));
     if (!p) return NULL;
     p->super.type = SML_JSON_NODE_OBJECT;
-    if (!SML_EHashMap_JsonNodep_init(&p->children, NULL, NULL)) {
+    if (!SML_LEHashMap_JsonNodep_init(&p->children, NULL, NULL)) {
         free(p);
         return NULL;
     }
@@ -127,14 +127,14 @@ void SML_JsonNode_free(SML_JsonNode *me)
         case SML_JSON_NODE_OBJECT: {
             SML_JsonNodeObject *p = (SML_JsonNodeObject *)me;
             /* free the children recursively */
-            for (SML_EHashMapIter_JsonNodep it = SML_EHashMap_JsonNodep_begin(&p->children);
-                 !SML_EHashMapIter_JsonNodep_isEnd(&it);
-                 SML_EHashMapIter_JsonNodep_next(&it))
+            for (SML_LEHashMapIter_JsonNodep it = SML_LEHashMap_JsonNodep_begin(&p->children);
+                 !SML_LEHashMapIter_JsonNodep_isEnd(&it);
+                 SML_LEHashMapIter_JsonNodep_next(&it))
             {
                 SML_JsonNode_free(it.item->value);
             }
             /* free the map */
-            SML_EHashMap_JsonNodep_destroy(&p->children);
+            SML_LEHashMap_JsonNodep_destroy(&p->children);
             break;
         }
         case SML_JSON_NODE_ARRAY: {
@@ -188,7 +188,7 @@ unsigned int SML_JsonNodeObject_size(SML_JsonNode *me)
         return 0;
     }
     SML_JsonNodeObject *const p = (SML_JsonNodeObject *)me;
-    return SML_EHashMap_JsonNodep_size(&p->children);
+    return SML_LEHashMap_JsonNodep_size(&p->children);
 }
 
 SML_JsonNode *SML_JsonNodeObject_get(SML_JsonNode *me, const char *name)
@@ -204,7 +204,7 @@ SML_JsonNode *SML_JsonNodeObject_getFromView(SML_JsonNode *me, const char *name,
     }
     SML_JsonNodeObject *const p = (SML_JsonNodeObject *)me;
     SML_JsonNode *child;
-    if (!SML_EHashMap_JsonNodep_get(&p->children, name, nameSize, &child)) {
+    if (!SML_LEHashMap_JsonNodep_get(&p->children, name, nameSize, &child)) {
         return NULL;
     }
     return child;
@@ -216,7 +216,7 @@ void SML_JsonNodeObject_insert(SML_JsonNode *me, const char *name, unsigned int 
         return;
     }
     SML_JsonNodeObject *const p = (SML_JsonNodeObject *)me;
-    SML_EHashMap_JsonNodep_insert(&p->children, name, nameSize, child);
+    SML_LEHashMap_JsonNodep_insert(&p->children, name, nameSize, child);
 }
 
 SML_JsonNodeObjectIter SML_JsonNodeObject_begin(SML_JsonNode *me)
@@ -230,18 +230,18 @@ SML_JsonNodeObjectIter SML_JsonNodeObject_begin(SML_JsonNode *me)
     }
     SML_JsonNodeObject *const p = (SML_JsonNodeObject *)me;
     SML_JsonNodeObjectIter iter;
-    iter.it = SML_EHashMap_JsonNodep_begin(&p->children);
+    iter.it = SML_LEHashMap_JsonNodep_begin(&p->children);
     return iter;
 }
 
 bool SML_JsonNodeObjectIter_isEnd(const SML_JsonNodeObjectIter *me)
 {
-    return SML_EHashMapIter_JsonNodep_isEnd(&me->it);
+    return SML_LEHashMapIter_JsonNodep_isEnd(&me->it);
 }
 
 void SML_JsonNodeObjectIter_next(SML_JsonNodeObjectIter *me)
 {
-    SML_EHashMapIter_JsonNodep_next(&me->it);
+    SML_LEHashMapIter_JsonNodep_next(&me->it);
 }
 
 size_t SML_JsonNodeArray_size(const SML_JsonNode *me)

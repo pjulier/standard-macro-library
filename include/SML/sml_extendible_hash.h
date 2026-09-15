@@ -706,7 +706,7 @@ static SML_EHASH_ITER_TNAME SML_EHASH_T_FNAME(begin)(const SML_EHASH_T_TNAME *me
 {
     /* map is empty? -> return the end iterator */
     if (SML_EHASH_T_FNAME(empty)(me)) {
-        return (SML_EHASH_ITER_TNAME){ me, &me->itemBuf[me->itemCount], me->bucketCount };
+        return (SML_EHASH_ITER_TNAME){ me, &me->itemBuf[me->itemCapacity], me->bucketCount };
     }
 
     /* serach the for the first item */
@@ -737,16 +737,12 @@ static void SML_EHASH_ITER_FNAME(next)(SML_EHASH_ITER_TNAME *me)
     }
 
     /* arrive here, no more entries */
-    me->item = &me->map->itemBuf[me->map->itemCount];
+    me->item = &me->map->itemBuf[me->map->itemCapacity];
 }
 
 static bool SML_EHASH_ITER_FNAME(isEnd)(const SML_EHASH_ITER_TNAME *me)
 {
-    if (me->item == &me->map->itemBuf[me->map->itemCount]) {
-        return true;
-    } else {
-        return false;
-    }
+    return me->item == &me->map->itemBuf[me->map->itemCapacity];
 }
 
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW

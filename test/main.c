@@ -54,6 +54,24 @@ typedef struct Point {
 #endif /* SML_EHashMap_uint_IMPL */
 
 /*
+ * Implement linked hash map of type unsigned int
+*/
+#ifndef SML_LEHashMap_uint_IMPL
+#define SML_LEHashMap_uint_IMPL
+#define SML_LEHASH_T unsigned int
+#define SML_LEHASH_KEYT char *
+#define SML_LEHASH_ID uint
+#define SML_LEHASH_ISKEYSTRING true
+#define SML_LEHASH_ISKEYCSTRING true
+#include "SML/sml_linked_extendible_hash.h"
+#undef SML_LEHASH_ISKEYCSTRING
+#undef SML_LEHASH_ISKEYSTRING
+#undef SML_LEHASH_ID
+#undef SML_LEHASH_KEYT
+#undef SML_LEHASH_T
+#endif /* SML_LEHashMap_uint_IMPL */
+
+/*
  * Implement circular buffer of unsigned int and capacity of 8
 */
 #ifndef SML_CircBuf_uint_IMPL
@@ -214,10 +232,43 @@ int main(void)
 
     /* check begin and end iterator for empty map */
     SML_EHashMapIter_uint it = SML_EHashMap_uint_begin(&hashMap);
-    printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMapIter_uint_isEnd(&it) ? "" : "NOT");
+    printf("Iterator begin of empty map is %sequal to iterator end\n", SML_EHashMapIter_uint_isEnd(&it) ? "" : "NOT ");
 
     /* free internal resources */
     SML_EHashMap_uint_destroy(&hashMap);
+
+    /*
+     * SML_LEHashMap
+     */
+    SML_LEHashMap_uint lhashMap;
+    SML_LEHashMap_uint_init(&lhashMap, NULL, NULL);
+
+    SML_LEHashMap_uint_insert(&lhashMap, "one", 1);
+    SML_LEHashMap_uint_insert(&lhashMap, "two", 2);
+    SML_LEHashMap_uint_insert(&lhashMap, "three", 3);
+    SML_LEHashMap_uint_insert(&lhashMap, "four", 4);
+    SML_LEHashMap_uint_insert(&lhashMap, "five", 5);
+    SML_LEHashMap_uint_insert(&lhashMap, "six", 6);
+
+    SML_LEHashMap_uint_erase(&lhashMap, "four");
+
+    /* forward iteration */
+    for (SML_LEHashMapIter_uint it = SML_LEHashMap_uint_begin(&lhashMap); 
+         !SML_LEHashMapIter_uint_isEnd(&it); 
+         SML_LEHashMapIter_uint_next(&it))
+    {
+        printf("Iterator key: %s, value: %u\n", it.item->key, it.item->value);
+    }
+
+    /* reverse iteration */
+    for (SML_LEHashMapReverseIter_uint it = SML_LEHashMap_uint_rbegin(&lhashMap); 
+         !SML_LEHashMapReverseIter_uint_isEnd(&it); 
+         SML_LEHashMapReverseIter_uint_next(&it))
+    {
+        printf("Reverse iterator key: %s, value: %u\n", it.item->key, it.item->value);
+    }
+
+    SML_LEHashMap_uint_destroy(&lhashMap);
 
     /*
      * Fixed size SML_CircBuf

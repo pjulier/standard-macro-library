@@ -11,20 +11,20 @@ typedef uint32_t SML_JsonNodeType;
  * Implement hash map with key string view and value (JsonNode *)
  * for SML_JsonNodeObject 
  */
-#ifndef SML_EHashMap_JsonNodep_IMPL
-#define SML_EHashMap_JsonNodep_IMPL
-#define SML_EHASH_T SML_JsonNode *
-#define SML_EHASH_KEYT char *
-#define SML_EHASH_ID JsonNodep
-#define SML_EHASH_ISKEYSTRING true
-#define SML_EHASH_ISKEYCSTRING false
-#include "SML/sml_extendible_hash.h"
-#undef SML_EHASH_ISKEYCSTRING
-#undef SML_EHASH_ISKEYSTRING
-#undef SML_EHASH_ID
-#undef SML_EHASH_KEYT
-#undef SML_EHASH_T
-#endif /* SML_EHashMap_JsonNodep_IMPL */
+#ifndef SML_LEHashMap_JsonNodep_IMPL
+#define SML_LEHashMap_JsonNodep_IMPL
+#define SML_LEHASH_T SML_JsonNode *
+#define SML_LEHASH_KEYT char *
+#define SML_LEHASH_ID JsonNodep
+#define SML_LEHASH_ISKEYSTRING true
+#define SML_LEHASH_ISKEYCSTRING false
+#include "SML/sml_linked_extendible_hash.h"
+#undef SML_LEHASH_ISKEYCSTRING
+#undef SML_LEHASH_ISKEYSTRING
+#undef SML_LEHASH_ID
+#undef SML_LEHASH_KEYT
+#undef SML_LEHASH_T
+#endif /* SML_LEHashMap_JsonNodep_IMPL */
 
 /*
  * Implement dynamic vector of type (JsonNode *)
@@ -63,7 +63,7 @@ struct SML_JsonNode {
 
 typedef struct SML_JsonNodeObject {
     SML_JsonNode super;
-    SML_EHashMap_JsonNodep children;
+    SML_LEHashMap_JsonNodep children;
 } SML_JsonNodeObject;
 
 typedef struct SML_JsonNodeArray {
@@ -86,7 +86,7 @@ typedef struct SML_JsonParseResult {
  * 
  */
 typedef struct SML_JsonNodeObjectIter {
-    SML_EHashMapIter_JsonNodep it;
+    SML_LEHashMapIter_JsonNodep it;
 } SML_JsonNodeObjectIter;
 
 SML_JsonNode *SML_JsonNode_createObject(void);
