@@ -759,7 +759,7 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
         if (me->itemCount + 1 > me->itemCapacity) {
             /* max capacity reached? */
             if (me->itemCapacity == SML_EHASH_MAX_ITEM_COUNT) {
-                return false;
+                return NULL;
             }
             /* reallocate buffer */
             uint64_t newCap = me->itemCapacity * 3 / 2 + (me->itemCapacity == 1);
