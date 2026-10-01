@@ -213,12 +213,23 @@ bool SML_DString_resize(SML_DString *me, size_t count);
 bool SML_DString_reserve(SML_DString *me, size_t count);
 
 /**
- * @brief Return a pointer to the beginning of internal data 
+ * @brief Return a pointer to the beginning of internal data
  * 
  * @param me pointer to self
  * @return char* pointer to beginning
  */
 static inline char* SML_DString_begin(const SML_DString *me)
+{
+    return me->begin;
+}
+
+/**
+ * @brief Return a const pointer to the beginning of internal data 
+ * 
+ * @param me pointer to self
+ * @return const char* pointer to beginning
+ */
+static inline const char* SML_DString_cbegin(const SML_DString *me)
 {
     return me->begin;
 }
@@ -230,6 +241,17 @@ static inline char* SML_DString_begin(const SML_DString *me)
  * @return char* pointer to end
  */
 static inline char* SML_DString_end(const SML_DString *me)
+{
+    return me->end;
+}
+
+/**
+ * @brief Return a const pointer to one past the last element
+ * 
+ * @param me pointer to self
+ * @return const char* pointer to end
+ */
+static inline const char* SML_DString_cend(const SML_DString *me)
 {
     return me->end;
 }

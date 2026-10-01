@@ -182,21 +182,21 @@ int main(void)
      */
     SML_DString s;
 
-    /* init from existing */
+    /* init from existing string */
     SML_DString_initFrom(&s, "Hello world");
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
 
     /* assign to another string */
     SML_DString_assign(&s, "Hello computer");
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
 
     /* append */
     SML_DString_append(&s, " and universe!");
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
 
     /* insert at position 18 */
     SML_DString_insert(&s, 18, "/or");
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
 
     /* get elements */
     printf("String front: %c\n", SML_DString_front(&s));
@@ -205,17 +205,17 @@ int main(void)
 
     /* resize to smaller size */
     SML_DString_resize(&s, 18);
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
     printf("String size: %u\n", (unsigned)SML_DString_size(&s));
 
     /* fill with character */
     SML_DString_fill(&s, 'x');
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
 
     /* push back single character */
     SML_DString_push_back(&s, 'y');
     SML_DString_push_back(&s, 'y');
-    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String is: %s\n", SML_DString_cbegin(&s));
     printf("String size: %u\n", (unsigned)SML_DString_size(&s));
 
     /* destroy */
