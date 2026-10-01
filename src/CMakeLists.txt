@@ -4,6 +4,7 @@ target_sources(sml PRIVATE
     sml.c
     sml_algo.c
     sml_string.c
+    sml_dyn_string.c
     sml_logger.c
     sml_filesystem.c
     sml_lexer.c

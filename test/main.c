@@ -8,6 +8,7 @@
 /* headers for each functionality have to be included individually */
 #include "SML/sml_algo.h"
 #include "SML/sml_string.h"
+#include "SML/sml_dyn_string.h"
 #include "SML/sml_logger.h"
 #include "SML/sml_filesystem.h"
 #include "SML/sml_mat3.h"
@@ -175,7 +176,51 @@ int main(void)
 
     /* free internal resources */
     SML_DVec_uint_destroy(&vec);
-    
+
+    /*
+     * SML_DString
+     */
+    SML_DString s;
+
+    /* init from existing */
+    SML_DString_initFrom(&s, "Hello world");
+    printf("String is: %s\n", SML_DString_begin(&s));
+
+    /* assign to another string */
+    SML_DString_assign(&s, "Hello computer");
+    printf("String is: %s\n", SML_DString_begin(&s));
+
+    /* append */
+    SML_DString_append(&s, " and universe!");
+    printf("String is: %s\n", SML_DString_begin(&s));
+
+    /* insert at position 18 */
+    SML_DString_insert(&s, 18, "/or");
+    printf("String is: %s\n", SML_DString_begin(&s));
+
+    /* get elements */
+    printf("String front: %c\n", SML_DString_front(&s));
+    printf("String back: %c\n", SML_DString_back(&s));
+    printf("String [4] : %c\n", SML_DString_get(&s, 4));
+
+    /* resize to smaller size */
+    SML_DString_resize(&s, 18);
+    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String size: %u\n", (unsigned)SML_DString_size(&s));
+
+    /* fill with character */
+    SML_DString_fill(&s, 'x');
+    printf("String is: %s\n", SML_DString_begin(&s));
+
+    /* push back single character */
+    SML_DString_push_back(&s, 'y');
+    SML_DString_push_back(&s, 'y');
+    printf("String is: %s\n", SML_DString_begin(&s));
+    printf("String size: %u\n", (unsigned)SML_DString_size(&s));
+
+    /* destroy */
+    SML_DString_destroy(&s);
+
     /*
      * SML_EHashMap
      */
@@ -251,6 +296,7 @@ int main(void)
     SML_LEHashMap_uint_insert(&lhashMap, "six", 6);
 
     SML_LEHashMap_uint_erase(&lhashMap, "four");
+    SML_LEHashMap_uint_erase(&lhashMap, "five");
 
     /* forward iteration */
     for (SML_LEHashMapIter_uint it = SML_LEHashMap_uint_begin(&lhashMap); 
