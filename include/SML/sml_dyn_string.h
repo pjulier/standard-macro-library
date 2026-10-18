@@ -5,6 +5,12 @@
 #include <stdbool.h>
 
 /**
+ * @brief Convenience macro to append a string literal the most efficient way
+ * 
+ */
+#define SML_DSTRING_APPEND_LITERAL(me_, other_) SML_DString_appendSpan(me_, other_, SML_STRLEN_LITERAL(other_))
+
+/**
  * @brief The main SML_DString type
  * 
  */
@@ -324,5 +330,27 @@ static inline char* SML_DString_get_p(const SML_DString *me, size_t pos)
 {
     return &me->begin[pos];
 }
+
+/**
+ * @brief Push back a formatted 64 bit integer value
+ *
+ * @param me pointer to self
+ * @param val integer value
+ * @param base integer base representation
+ * @return true success
+ * @return false failure
+ */
+bool SML_DString_push_back_i64(SML_DString *me, int64_t val, int base);
+
+/**
+ * @brief Push back a formatted double value
+ * 
+ * @param me pointer to self
+ * @param val double value
+ * @return true success
+ * @return false failure
+ */
+bool SML_DString_push_back_dbl(SML_DString *me, double val);
+
 
 #endif /* INCLUDE_SML_DYN_STRING_H */

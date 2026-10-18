@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "SML/sml_dyn_string.h"
+
 typedef struct SML_JsonNode SML_JsonNode;
 typedef uint32_t SML_JsonNodeType;
 
@@ -103,7 +105,7 @@ bool          SML_JsonNode_isNumeric(const SML_JsonNode *me);
 bool          SML_JsonNode_isString(const SML_JsonNode *me);
 bool          SML_JsonNode_isBoolean(const SML_JsonNode *me);
 bool          SML_JsonNode_isNull(const SML_JsonNode *me);
-void          SML_JsonNode_print(SML_JsonNode *me);
+bool          SML_JsonNode_serialize(SML_JsonNode *me, SML_DString *str);
 
 unsigned int  SML_JsonNodeObject_size(SML_JsonNode *me);
 SML_JsonNode *SML_JsonNodeObject_get(SML_JsonNode *me, const char *name);

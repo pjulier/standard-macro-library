@@ -11,6 +11,7 @@
 #define SML_ZEROA(x) (memset(x, 0, sizeof(x)))
 #define SML_ZEROP(x) (memset(x, 0, sizeof(*x)))
 #define SML_STRLEN_LITERAL(s) (sizeof(s) / sizeof(s[0]) - 1)
+#define SML_STRFY(x_) #x_
 
 /*
  * SML logger tag

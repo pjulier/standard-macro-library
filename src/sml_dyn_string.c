@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h> // TODO: temp for snprintf
 
 #include "SML/sml_common.h"
+#include "SML/sml_string.h"
 #include "SML/sml_dyn_string.h"
 
 #define SML_DSTRING_INITIAL_CAPACITY 1
@@ -42,7 +44,7 @@ static inline bool sML_DString_growTo(SML_DString *me, size_t capacity)
 
 static inline bool sML_DString_growToAtLeast(SML_DString *me, size_t capacity)
 {
-    size_t newCap = me->end - me->begin;
+    size_t newCap = me->capacity;
     while (newCap < capacity) {
         newCap = SML_DSTRING_GROWTH_FACTOR_NUM * newCap / SML_DSTRING_GROWTH_FACTOR_DEN + (newCap < 2);
     }
@@ -280,8 +282,46 @@ bool SML_DString_resize(SML_DString *me, size_t count)
 
 bool SML_DString_reserve(SML_DString *me, size_t capacity)
 {
-    if (capacity < me->capacity) {
+    if (capacity <= me->capacity) {
         return true;
     }
     return sML_DString_growTo(me, capacity);
+}
+
+bool SML_DString_push_back_i64(SML_DString *me, int64_t val, int base)
+{
+    size_t avail;
+    size_t written;
+
+    /* write at the end of the string until there is no more overflow */
+    while (avail = me->capacity + 1 - (me->end - me->begin), /* avail includes NULL termination */
+           (written = SML_i64tochars(me->end, avail, val, base)) == avail)
+    {
+        if (!sML_DString_growToAtLeast(me, me->end - me->begin + avail)) {
+            return false;
+        }
+    }
+    /* string is already null terminated by SML_i64tochars() */
+    me->end = me->end + written;
+    return true;
+}
+
+bool SML_DString_push_back_dbl(SML_DString *me, double val)
+{
+    // TODO: use snprintf until we have our own implementation
+    size_t avail = me->capacity - (me->end - me->begin); /* without null termination */
+    size_t required = snprintf(me->end, avail + 1, "%f", val);
+    if (required >= avail) {
+        if (!sML_DString_growToAtLeast(me, required)) {
+            return false;
+        }
+        avail = me->capacity - (me->end - me->begin);
+        required = snprintf(me->end, avail + 1, "%f", val);
+        if (required < 0) {
+            return false;
+        }
+    }
+    /* string is already null terminated */
+    me->end = me->end + required;
+    return true;
 }

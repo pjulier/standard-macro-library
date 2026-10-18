@@ -10,14 +10,12 @@
 #include "SML/sml_utf8.h"
 #include "SML/sml_json.h"
 
-// TODO: temp
-#include <assert.h>
 
 static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res);
 static SMLReturn sml_Json_parseArray(SML_Lexer *lex, SML_JsonParseResult *res);
 static SMLReturn sml_Json_parseValue(SML_Lexer *lex, SML_JsonParseResult *res);
-static inline void sml_Json_printIndent(unsigned int level);
-static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level);
+static inline bool sml_Json_serializeIndent(SML_DString *str, unsigned int level);
+static bool sml_JsonNode_serialize(SML_JsonNode *me, SML_DString *str, unsigned int level);
 static const char *sml_JsonNodeType_toString(SML_JsonNodeType type);
 
 
@@ -180,7 +178,6 @@ bool SML_JsonNode_isNull(const SML_JsonNode *me)
 {
     return me->type == SML_JSON_NODE_NULL;
 }
-
 
 unsigned int SML_JsonNodeObject_size(SML_JsonNode *me)
 {
@@ -473,12 +470,17 @@ SML_JsonParseResult SML_Json_parse(const char *src, size_t len)
     return res;
 }
 
-void SML_JsonNode_print(SML_JsonNode *me)
+bool SML_JsonNode_serialize(SML_JsonNode *me, SML_DString *str)
 {
-    sml_JsonNode_print(me, 0);
-    printf("\n");
+    SML_DString_clear(str);
+    if (!sml_JsonNode_serialize(me, str, 0)) {
+        return false;
+    }
+    if (!SML_DString_push_back(str, '\n')) {
+        return false;
+    }
+    return true;
 }
-
 
 static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res)
 {
@@ -548,7 +550,6 @@ static SMLReturn sml_Json_parseObject(SML_Lexer *lex, SML_JsonParseResult *res)
         /* add the child to the children */
         SML_JsonNodeObject_insert(node, name.data, name.size, res->root);
 
-
         /* check for exit condition */
         tok = SML_Lexer_nextToken(lex, true);
         if (tok.type == SML_TOK_RBRACE) {
@@ -604,6 +605,12 @@ static SMLReturn sml_Json_parseArray(SML_Lexer *lex, SML_JsonParseResult *res)
         if (tok.type == SML_TOK_LBRACE) {
             /* is an object */
             ret = sml_Json_parseObject(lex, res);
+            if (ret != SML_RET_OK) {
+                goto failed;
+            }
+        } else if (tok.type == SML_TOK_LBRACKET) {
+            /* is another array */
+            ret = sml_Json_parseArray(lex, res);
             if (ret != SML_RET_OK) {
                 goto failed;
             }
@@ -735,13 +742,13 @@ failed:
     return ret;
 }
 
-static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level)
+static bool sml_JsonNode_serialize(SML_JsonNode *me, SML_DString *str, unsigned int level)
 {
     if (me->type == SML_JSON_NODE_OBJECT) {
         size_t childCount = SML_JsonNodeObject_size(me);
         size_t iiChild = 0;
-        sml_Json_printIndent(level);
-        printf("{\n");
+        sml_Json_serializeIndent(str, level);
+        SML_DSTRING_APPEND_LITERAL(str, "{\n");
 
         ++level;
 
@@ -752,53 +759,53 @@ static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level)
             const char *name = it.it.item->key;
             SML_JsonNode *child = it.it.item->value;
 
-            sml_Json_printIndent(level);
-            printf("\"%s\": ", name);
+            sml_Json_serializeIndent(str, level);
+            SML_DString_push_back(str, '\"');
+            SML_DString_append(str, name);
+            SML_DSTRING_APPEND_LITERAL(str, "\": ");
 
             switch (child->type) {
-                case SML_JSON_NODE_OBJECT: {
-                    printf("\n");
-                    sml_JsonNode_print(child, level + 1);
-                    break;
-                }
+                case SML_JSON_NODE_OBJECT: /* fallthrough */
                 case SML_JSON_NODE_ARRAY: {
-                    printf("\n");
-                    sml_JsonNode_print(child, level + 1);
+                    SML_DString_push_back(str, '\n');
+                    sml_JsonNode_serialize(child, str, level + 1);
                     break;
                 }
                 case SML_JSON_NODE_STRING: {
-                    printf("\"%s\"", SML_JsonNodeValue_getString(child));
+                    SML_DString_push_back(str, '\"');
+                    SML_DString_append(str, SML_JsonNodeValue_getString(child));
+                    SML_DString_push_back(str, '\"');
                     break;
                 }
                 case SML_JSON_NODE_DOUBLE: {
-                    printf("%f", SML_JsonNodeValue_getDouble(child));
+                    SML_DString_push_back_dbl(str, SML_JsonNodeValue_getDouble(child));
                     break;
                 }
                 case SML_JSON_NODE_INT: {
-                    printf("%i", (int)SML_JsonNodeValue_getInt(child));
+                    SML_DString_push_back_i64(str, SML_JsonNodeValue_getInt(child), 10);
                     break;
                 }
                 case SML_JSON_NODE_BOOL: {
-                    printf("%s", SML_JsonNodeValue_getBool(child) ? "true" : "false");
+                    SML_DString_append(str, SML_JsonNodeValue_getBool(child) ? "true" : "false");
                     break;
                 }
                 case SML_JSON_NODE_NULL: {
-                    printf("null");
+                    SML_DSTRING_APPEND_LITERAL(str, "null");
                     break;
                 }
             }
             if (iiChild++ < childCount - 1) {
-                printf(",");
+                SML_DString_push_back(str, ',');
             }
-            printf("\n");
+            SML_DString_push_back(str, '\n');
         }
 
         --level;
-        sml_Json_printIndent(level);
-        printf("}");
+        sml_Json_serializeIndent(str, level);
+        SML_DString_push_back(str, '}');
     } else if (me->type == SML_JSON_NODE_ARRAY) {
-        sml_Json_printIndent(level);
-        printf("[\n");
+        sml_Json_serializeIndent(str, level);
+        SML_DSTRING_APPEND_LITERAL(str, "[\n");
 
         ++level;
 
@@ -806,58 +813,59 @@ static void sml_JsonNode_print(SML_JsonNode *me, unsigned int level)
             SML_JsonNode *child = SML_JsonNodeArray_get(me, iiChild);
 
             switch (child->type) {
-                case SML_JSON_NODE_OBJECT: {
-                    sml_JsonNode_print(child, level);
-                    break;
-                }
+                case SML_JSON_NODE_OBJECT: /* fallthrough */
                 case SML_JSON_NODE_ARRAY: {
-                    // TODO: error
-                    assert(false);
+                    sml_JsonNode_serialize(child, str, level);
                     break;
                 }
                 case SML_JSON_NODE_STRING: {
-                    sml_Json_printIndent(level);
-                    printf("\"%s\"", SML_JsonNodeValue_getString(child));
+                    sml_Json_serializeIndent(str, level);
+                    SML_DString_push_back(str, '\"');
+                    SML_DString_append(str, SML_JsonNodeValue_getString(child));
+                    SML_DString_push_back(str, '\"');
                     break;
                 }
                 case SML_JSON_NODE_DOUBLE: {
-                    sml_Json_printIndent(level);
-                    printf("%f", SML_JsonNodeValue_getDouble(child));
+                    sml_Json_serializeIndent(str, level);
+                    SML_DString_push_back_dbl(str, SML_JsonNodeValue_getDouble(child));
                     break;
                 }
                 case SML_JSON_NODE_INT: {
-                    sml_Json_printIndent(level);
-                    printf("%i", (int)SML_JsonNodeValue_getInt(child));
+                    sml_Json_serializeIndent(str, level);
+                    SML_DString_push_back_i64(str, SML_JsonNodeValue_getInt(child), 10);
                     break;
                 }
                 case SML_JSON_NODE_BOOL: {
-                    sml_Json_printIndent(level);
-                    printf("%s", SML_JsonNodeValue_getBool(child) ? "true" : "false");
+                    sml_Json_serializeIndent(str, level);
+                    SML_DString_append(str, SML_JsonNodeValue_getBool(child) ? "true" : "false");
                     break;
                 }
                 case SML_JSON_NODE_NULL: {
-                    printf("null");
+                    SML_DSTRING_APPEND_LITERAL(str, "null");
                     break;
                 }
             }
             if (iiChild < SML_JsonNodeArray_size(me) - 1) {
-                printf(",");
+                SML_DString_push_back(str, ',');
             }
-            printf("\n");
+            SML_DString_push_back(str, '\n');
         }
         --level;
-        sml_Json_printIndent(level);
-        printf("]");
+        sml_Json_serializeIndent(str, level);
+        SML_DString_push_back(str, ']');
     } else {
         printf("A value is not a valid root node\n");
     }
+    return true;
 }
 
-static inline void sml_Json_printIndent(unsigned int level)
+static inline bool sml_Json_serializeIndent(SML_DString *str, unsigned int level)
 {
+    bool ret; 
     while (level-- > 0) {
-        printf("  ");
+        ret = SML_DSTRING_APPEND_LITERAL(str, "  ");
     }
+    return ret;
 }
 
 static const char *sml_JsonNodeType_toString(SML_JsonNodeType type)

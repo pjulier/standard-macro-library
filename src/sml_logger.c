@@ -285,7 +285,7 @@ void SML_Logger_output(const char *tag, SML_LogLevel level, const char *func, in
 
     /* output to console */
     if (config->logLvlConsole < SML_LOG_LVL_NEVER && level >= config->logLvlConsole) {
-        static const char *levelStrings[] = { "TRACE", "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL" };
+        static const char *levelStrings[] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
         char out_msg[SML_LOG_MSG_LEN];
         size_t remaining;
         char *to = out_msg;
@@ -332,7 +332,7 @@ void SML_Logger_output(const char *tag, SML_LogLevel level, const char *func, in
                     break;
                 }
                 case SML_LOGGER_ATTRIB_line: {
-                    to = SML_itoap(to, remaining, line, 10);
+                    to = SML_i64tocharsp(to, remaining, line, 10);
                     break;
                 }
                 case SML_LOGGER_ATTRIB_time: {

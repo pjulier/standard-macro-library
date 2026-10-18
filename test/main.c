@@ -130,6 +130,7 @@ int main(void)
      */
     int major, minor, release;
     SML_getVersion(&major, &minor, &release);
+
     printf("SML library version: %i.%i.%i (headers: %i.%i.%i)\n", major ,minor, release, SML_VERSION_MAJOR, SML_VERSION_MINOR, SML_VERSION_RELEASE);
 
     /*
@@ -214,7 +215,10 @@ int main(void)
 
     /* push back single character */
     SML_DString_push_back(&s, 'y');
-    SML_DString_push_back(&s, 'y');
+    printf("String is: %s\n", SML_DString_cbegin(&s));
+    printf("String size: %u\n", (unsigned)SML_DString_size(&s));
+
+    SML_DString_push_back_i64(&s, 12345678, 10);
     printf("String is: %s\n", SML_DString_cbegin(&s));
     printf("String size: %u\n", (unsigned)SML_DString_size(&s));
 
@@ -446,22 +450,16 @@ int main(void)
     printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
     
     char *str_dup = SML_strdup(str_buf);
-    printf("str_cpy: %s\n", str_dup);
+    printf("str_dup: %s\n", str_dup);
     free(str_dup);
 
-    char strbin32[33];
-    SML_u32tobin(UINT32_MAX - 1, strbin32, 32);
-    printf("strbin32: %s\n", strbin32);
-
-    char strbin64[65];
-    SML_u64tobin(UINT64_MAX - 1, strbin64, 64);
-    printf("strbin64: %s\n", strbin64);
-
-    char stritoa[8 * sizeof(int) + 2];
-    SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MIN, 10);
-    printf("stritoa (val: INT_MIN, base: 10): %s\n", stritoa);
-    SML_itoa(stritoa, SML_ARRCOUNT(stritoa), INT_MAX, 16);
-    printf("stritoa (val: INT_MAX, base: 16): 0x%s\n", stritoa);
+    char i64tochars[8 * sizeof(int64_t) + 2];
+    SML_i64tochars(i64tochars, SML_ARRCOUNT(i64tochars), 10, 2);
+    printf("i64tochars (val: 10,        base: 2): %s\n", i64tochars);
+    SML_i64tochars(i64tochars, SML_ARRCOUNT(i64tochars), INT64_MIN, 10);
+    printf("i64tochars (val: INT64_MIN, base: 10): %s\n", i64tochars);
+    SML_i64tochars(i64tochars, SML_ARRCOUNT(i64tochars), INT64_MAX, 16);
+    printf("i64tochars (val: INT64_MAX, base: 16): 0x%s\n", i64tochars);
 
     /*
      * SML_Logger
@@ -574,15 +572,19 @@ int main(void)
      * SML_Json
      */
     SML_JsonParseResult res;
-    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234567} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3} ], \"escaped_quotes\": \"\\\"\", \"utf8_string\": \"hello\xF0\x9F\x98\x8E\"}";
+    const char jsonStr[] = "{ \"lib_name\": \"standard-macro-library\", \"abbreviation\": \"sml\", \"since\": 2025, \"language\": \"C\", \"containers\" : [ { \"name\": \"SML_DVec\", \"lines\": 1234567} , {\"name\": \"SML_EHashMap\", \"lines\": -9.9e3}, [1,2,3] ], \"escaped_quotes\": \"\\\"\", \"utf8_string\": \"hello\xF0\x9F\x98\x8E\"}";
     res = SML_Json_parse(jsonStr, SML_STRLEN_LITERAL(jsonStr));
 
     if (res.root) {
-        printf("Parsed json:\n");
-        SML_JsonNode_print(res.root);
+        SML_DString str;
+        SML_DString_init(&str);
+        SML_JsonNode_serialize(res.root, &str);
+        printf("Parsed json:\n%s", SML_DString_cbegin(&str));
+        SML_DString_destroy(&str);
     } else {
         printf("Parser error: %s\n", res.errorStr);
     }
+
     SML_JsonParseResult_destroy(&res);
 
     return 0;

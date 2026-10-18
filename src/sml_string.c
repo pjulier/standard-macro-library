@@ -3,34 +3,6 @@
 
 #include "SML/sml_string.h"
 
-void SML_u64tobin(uint64_t value, char *str, int places)
-{
-    if (places > 64) {
-        places = 64;
-    }
-    while (places--) {
-		*str++ = value & ((uint64_t)1 << places) ? '1' : '0';
-    }
-    *str = '\0';
-}
-
-void SML_u32tobin(uint32_t value, char *str, int places)
-{
-    if (places > 32) {
-        places = 32;
-    }
-    while (places--) {
-		*str++ = value & ((uint32_t)1 << places) ? '1' : '0';
-    }
-    *str = '\0';
-}
-
-char* SML_strpcpy(char *dst, const char *src)
-{
-  const size_t len = strlen(src);
-  return (char *)memcpy(dst, src, len + 1) + len;
-}
-
 size_t SML_strscpy(char *dst, const char *src, size_t dstSize)
 {
     if (dstSize == 0) {
@@ -45,6 +17,12 @@ size_t SML_strscpy(char *dst, const char *src, size_t dstSize)
     }
     *dst = '\0';
     return i + (i == dstSize);
+}
+
+char* SML_strpcpy(char *dst, const char *src)
+{
+  const size_t len = strlen(src);
+  return (char *)memcpy(dst, src, len + 1) + len;
 }
 
 char* SML_strdup(const char *src)
@@ -139,16 +117,16 @@ SMLReturn SML_charstoi64(const char *src, const char **end, unsigned int base, i
     return ret;
 }
 
-char* SML_itoa(char *dst, unsigned int size, int val, int base)
+size_t SML_i64tochars(char *dst, unsigned int dstSize, int64_t val, int base)
 {
     static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     
-    /* max length with val = INT_MIN and base = 2 */
+    /* max length with val = INT64_MIN and base = 2 */
     char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
 
-    /* size has to be at least 2 to allow for one digit + null character */
-    if (base < 2 || base > 36 || size < 2) {
-        return NULL;
+    /* sanity checks */
+    if (base < 2 || base > 36 || dstSize == 0) {
+        return 0;
     }
 
     /* start from the end */
@@ -169,23 +147,24 @@ char* SML_itoa(char *dst, unsigned int size, int val, int base)
     const unsigned int l_size = &buffer[sizeof(buffer)] - p;
 
     /* if str does not fit we only copy the front part and null terminate manually */
-    if (l_size > size) {
-        memcpy(dst, p, size - 1);
-        dst[size - 1] = '\0';
-        return dst;
+    if (l_size > dstSize) {
+        memcpy(dst, p, dstSize - 1);
+        dst[dstSize - 1] = '\0';
+        return dstSize;
     }
-    return memcpy(dst, p, l_size);
+    memcpy(dst, p, l_size);
+    return l_size - 1;
 }
 
-char* SML_itoap(char *dst, unsigned int size, int val, int base)
+char* SML_i64tocharsp(char *dst, unsigned int dstSize, int64_t val, int base)
 {
     static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     
-    /* max length with val = INT_MIN and base = 2 */
+    /* max length with val = INT64_MIN and base = 2 */
     char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
 
-    /* size has to be at least 2 to allow for one digit + null character */
-    if (base < 2 || base > 36 || size < 2) {
+    /* sanity checks */
+    if (base < 2 || base > 36 || dstSize == 0) {
         return dst;
     }
 
@@ -207,10 +186,10 @@ char* SML_itoap(char *dst, unsigned int size, int val, int base)
     const unsigned int l_size = &buffer[sizeof(buffer)] - p;
 
     /* if str does not fit we only copy the front part and null terminate manually */
-    if (l_size > size) {
-        memcpy(dst, p, size - 1);
-        dst[size - 1] = '\0';
-        return dst + size - 1;
+    if (l_size > dstSize) {
+        memcpy(dst, p, dstSize - 1);
+        dst[dstSize - 1] = '\0';
+        return dst + dstSize - 1;
     }
 
     memcpy(dst, p, l_size);

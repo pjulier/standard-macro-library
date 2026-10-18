@@ -8,7 +8,9 @@
  */
 #define SML_VERSION_MAJOR   0
 #define SML_VERSION_MINOR   2
-#define SML_VERSION_RELEASE 6
+#define SML_VERSION_RELEASE 7
+#define SML_VERSION_STR_GLUE(major_, minor_, release_) SML_STRFY(major_.minor_.release_)
+#define SML_VERSION_STR SML_VERSION_STR_GLUE(SML_VERSION_MAJOR, SML_VERSION_MINOR, SML_VERSION_RELEASE)
 
 #ifdef __cplusplus
 extern "C" {
