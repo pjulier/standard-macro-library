@@ -119,7 +119,7 @@ SMLReturn SML_charstoi64(const char *src, const char **end, unsigned int base, i
 
 size_t SML_i64tochars(char *dst, unsigned int dstSize, int64_t val, int base)
 {
-    static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char digits[] = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz";
     
     /* max length with val = INT64_MIN and base = 2 */
     char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
@@ -158,7 +158,7 @@ size_t SML_i64tochars(char *dst, unsigned int dstSize, int64_t val, int base)
 
 char* SML_i64tocharsp(char *dst, unsigned int dstSize, int64_t val, int base)
 {
-    static const char digits[] = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static const char digits[] = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz";
     
     /* max length with val = INT64_MIN and base = 2 */
     char buffer[8 * sizeof(val) + 2]; /* +1 for sign, +1 for null character */
