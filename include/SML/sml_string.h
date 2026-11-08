@@ -11,6 +11,19 @@ extern "C" {
 #endif
 
 /**
+ * @brief Return the length of a string but inspect but more than maxSize bytes.
+ * 
+ * In case maxSize is returned the null termination was not found
+ * in maxSize bytes. In any other case the return value is the true size
+ * of the string without the null byte.
+ * 
+ * @param src string whose size to be determined
+ * @param maxSize maximum number of bytes to inspect
+ * @return size_t length of the string or maxSize if null byte was not found
+ */
+size_t SML_strslen(const char *src, size_t maxSize);
+
+/**
  * @brief Safe string copy function.
  *
  * Copies a string from src to buf. Inspects no more than 

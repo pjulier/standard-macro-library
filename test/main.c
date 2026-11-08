@@ -260,9 +260,9 @@ int main(void)
     SML_EHashMap_uint_insert(&hashMap, "six", 6);
 
     /* remove key value pair */
-    SML_EHashMap_uint_erase(&hashMap, "six");
+        SML_EHashMap_uint_erase(&hashMap, "six");
 
-    /* iterate over all items (unordered) */
+        /* iterate over all items (unordered) */
     for (SML_EHashMapIter_uint it = SML_EHashMap_uint_begin(&hashMap); 
          !SML_EHashMapIter_uint_isEnd(&it); 
          SML_EHashMapIter_uint_next(&it))
@@ -307,7 +307,7 @@ int main(void)
          !SML_LEHashMapIter_uint_isEnd(&it); 
          SML_LEHashMapIter_uint_next(&it))
     {
-        printf("Iterator key: %s, value: %u\n", it.item->key, it.item->value);
+        printf("Forward Iterator key: %s, value: %u\n", it.item->key, it.item->value);
     }
 
     /* reverse iteration */
@@ -448,7 +448,13 @@ int main(void)
     printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
     n = SML_strscpy(buf, "123456789ABC", 10);
     printf("SML_strscpy (%struncation detected) -- n: %i, buf: %s\n", n == 10 ? "" : "no ", (int)n, buf);
-    
+    n = SML_strslen(buf, 10);
+    printf("SML_strslen (end %sfound within 10 chars) -- n: %i, buf: %s\n", n == 10 ? "not " : "", (int)n, buf);
+    n = SML_strslen(buf, 9);
+    printf("SML_strslen (end %sfound within 9 chars) -- n: %i, buf: %s\n", n == 9 ? "not " : "", (int)n, buf);
+    n = SML_strslen(buf, 8);
+    printf("SML_strslen (end %sfound within 8 chars) -- n: %i, buf: %s\n", n == 8 ? "not " : "", (int)n, buf);
+
     char *str_dup = SML_strdup(str_buf);
     printf("str_dup: %s\n", str_dup);
     free(str_dup);

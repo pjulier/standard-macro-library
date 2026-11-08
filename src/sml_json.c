@@ -854,7 +854,8 @@ static bool sml_JsonNode_serialize(SML_JsonNode *me, SML_DString *str, unsigned 
         sml_Json_serializeIndent(str, level);
         SML_DString_push_back(str, ']');
     } else {
-        printf("A value is not a valid root node\n");
+        /* not a valid root node */
+        return false;
     }
     return true;
 }

@@ -4,22 +4,12 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include "SML/sml_string.h"
 #include "SML/sml_common.h"
 
-/*
- * Implement a dynamic stack of type uint32_t - SML inception :)
- */
-#ifndef SML_DStack_u32EHashMap_IMPL
-#define SML_DStack_u32EHashMap_IMPL
-#define SML_DSTACK_T uint32_t
-#define SML_DSTACK_ID u32EHashMap
-#include "SML/sml_dyn_stack.h"
-#undef SML_DSTACK_ID
-#undef SML_DSTACK_T
-#endif /* SML_DStack_u32EHashMap_IMPL */ 
 
 #define SML_EHASH_INITIAL_ITEM_CAPACITY 1
 #define SML_EHASH_INITIAL_BUCKET_DEPTH  1
@@ -124,7 +114,7 @@ typedef struct SML_EHASH_T_TNAME {
     SML_EHASH_T_FNAME(compare_fn) compare_fn;  /**< compare function pointer */
     SML_EHASH_BUCKETENTRY_TNAME *buckets;      /**< array of buckets */
     SML_EHASH_ITEM_TNAME *itemBuf;             /**< array of items */    
-    SML_DStack_u32EHashMap itemFreeList;       /**< free list containing free indices into itemBuf */                     
+    uint32_t freeHead;                         /**< head of internal free list (index into itemBuf) */                     
     uint32_t *directory;                       /**< global directory, contains indices into "buckets" */
     uint32_t globalDepth;                      /**< bit depth of "directory" */                    
     uint32_t itemCount;                        /**< total number of items currently used */
@@ -292,7 +282,7 @@ static bool SML_EHASH_T_FNAME(initWithDepth)(SML_EHASH_T_TNAME *me, SML_EHASH_T_
     me->itemCapacity = SML_EHASH_INITIAL_ITEM_CAPACITY;
 
     /* init free list of items */
-    SML_DStack_u32EHashMap_init(&me->itemFreeList);
+    me->freeHead = UINT32_MAX;
 
     return true;
 
@@ -329,8 +319,6 @@ static void SML_EHASH_T_FNAME(destroy)(SML_EHASH_T_TNAME *me)
     }
 #endif /* SML_EHASH_ISKEYSTRING*/
 
-    /* free the item free list */
-    SML_DStack_u32EHashMap_destroy(&me->itemFreeList);
     /* free the itemBuf */
     free(me->itemBuf);
     /* free the buckets array */
@@ -554,8 +542,9 @@ static void SML_EHASH_T_FNAME(erase)(SML_EHASH_T_TNAME *me, const SML_EHASH_KEYT
 #if SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_STRINGVIEW || SML_EHASH_KEYCLASS == SML_EHASH_KEYCLASS_CSTRING
             free(item->key);
 #endif
-            /* push index onto free list */
-            SML_DStack_u32EHashMap_push(&me->itemFreeList, itemIdx);
+            /* convert item to free list head */
+            item->next = me->freeHead;
+            me->freeHead = itemIdx;
             return;
         }
         prevIdxPtr = &item->next;
@@ -585,9 +574,9 @@ static void SML_EHASH_T_FNAME(clear)(SML_EHASH_T_TNAME *me)
         me->buckets[i].first = UINT32_MAX;
         me->buckets[i].bucketSize = 0;
     }
-    /* instead of pushing everything on the free list, only set itemCount to zero */
+    /* reset item count and free list head */
     me->itemCount = 0;
-    SML_DStack_u32EHashMap_clear(&me->itemFreeList);
+    me->freeHead = UINT32_MAX;
 }
 
 static bool SML_EHASH_T_FNAME(expand)(SML_EHASH_T_TNAME *me, uint32_t hash, uint32_t dirIdxIn, uint32_t bucketIdxIn, uint32_t *bucketIdxOut)
@@ -752,9 +741,8 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
 #endif
 {
     uint32_t idx;
-    bool fromFreeList;
 
-    if (SML_DStack_u32EHashMap_empty(&me->itemFreeList)) {
+    if (me->freeHead == UINT32_MAX) {
         /* append new item */
         if (me->itemCount + 1 > me->itemCapacity) {
             /* max capacity reached? */
@@ -775,11 +763,10 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
             me->itemCapacity = newCap;
         }
         idx = me->itemCount;
-        fromFreeList = false;
     } else {
-        /* use existing free spot */
-        idx = SML_DStack_u32EHashMap_back(&me->itemFreeList);
-        fromFreeList = true;
+        /* pop item from free list */
+        idx = me->freeHead;
+        me->freeHead = me->itemBuf[me->freeHead].next;
     }
 
     /* get the item pointer */
@@ -804,10 +791,6 @@ static SML_EHASH_ITEM_TNAME * SML_EHASH_T_FNAME(createItemAndInsertFirst)(SML_EH
     me->buckets[bucketIdx].first = idx;
     ++me->buckets[bucketIdx].bucketSize;
     ++me->itemCount;
-
-    if (fromFreeList) {
-        SML_DStack_u32EHashMap_pop(&me->itemFreeList);
-    }
 
     return item;
 }

@@ -3,6 +3,12 @@
 
 #include "SML/sml_string.h"
 
+size_t SML_strslen(const char *src, size_t maxSize)
+{
+    const char *const p = memchr(src, '\0', maxSize);
+    return p ? (size_t)(p - src) : maxSize;
+}
+
 size_t SML_strscpy(char *dst, const char *src, size_t dstSize)
 {
     if (dstSize == 0) {
